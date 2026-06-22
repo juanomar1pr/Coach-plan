@@ -2,1406 +2,198 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Coach Rosetta Stone — USAG Class Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Planner — USAG Coach Tools</title>
   <style>
-    @page { size: letter; margin: 0.4in 0.45in; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #111;
+      --muted: #5c5c5c;
+      --line: #d4d4d4;
+      --bg: #f4f4f5;
+      --card: #fff;
+      --accent: #1d4ed8;
+      --accent-soft: #eff6ff;
+    }
     body {
       font-family: "Helvetica Neue", Arial, sans-serif;
-      font-size: 13px;
-      line-height: 1.4;
-      color: #111;
-      background: #e8e8e8;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      line-height: 1.45;
     }
 
-    /* ── BUILDER (screen only) ── */
-    .builder {
-      max-width: 1100px;
+    .wrap {
+      max-width: 920px;
       margin: 0 auto;
-      padding: 12px 16px 24px;
-    }
-    .toolbar {
-      background: #222; color: #fff;
-      padding: 10px 14px; border-radius: 6px;
-      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-      margin-bottom: 14px; position: sticky; top: 0; z-index: 50;
-    }
-    .toolbar h1 { font-size: 15px; font-weight: 700; margin-right: 12px; }
-    .toolbar button {
-      background: #fff; color: #222; border: none;
-      padding: 7px 14px; font-weight: 600; cursor: pointer; border-radius: 4px;
-    }
-    .toolbar button.primary { background: #2563eb; color: #fff; }
-    .toolbar button.ghost { background: #444; color: #fff; }
-    .toolbar .status { font-size: 11px; color: #86efac; margin-left: auto; }
-
-    .setup-row {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-      background: #fff; padding: 12px; border-radius: 6px;
-      border: 1px solid #ccc; margin-bottom: 12px;
-    }
-    .setup-row label { font-size: 11px; font-weight: 600; color: #555; display: block; margin-bottom: 3px; }
-    .setup-row input, .setup-row select {
-      width: 100%; padding: 6px 8px; border: 1px solid #bbb; border-radius: 4px; font-size: 13px;
+      padding: 48px 24px 64px;
     }
 
-    .selector-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+    .brand {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .brand .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .brand h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    .brand p {
+      margin-top: 12px;
+      font-size: 15px;
+      color: var(--muted);
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
       margin-bottom: 14px;
     }
-    @media (max-width: 900px) { .selector-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 600px) { .selector-grid { grid-template-columns: 1fr; } }
 
-    fieldset.panel {
-      background: #fff; border: 1px solid #ccc; border-radius: 6px;
-      padding: 10px 12px; margin: 0;
+    .tools {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
     }
-    fieldset.panel legend {
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.04em; padding: 0 6px; color: #222;
-    }
-    fieldset.panel.wide { grid-column: span 2; }
-    fieldset.panel.full { grid-column: 1 / -1; }
+    @media (max-width: 680px) { .tools { grid-template-columns: 1fr; } }
 
-    .check-list {
-      max-height: 160px; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 2px;
-    }
-    .check-list.tall { max-height: 240px; }
-    .check-list.xl { max-height: 320px; }
-    .check-list.xxl { max-height: 400px; }
-    .check-list label {
-      display: flex; align-items: flex-start; gap: 6px;
-      font-size: 11.5px; padding: 3px 4px; border-radius: 3px; cursor: pointer;
-    }
-    .check-list label:hover { background: #f0f4ff; }
-    .check-list input { margin-top: 2px; flex-shrink: 0; }
-    .panel-actions {
-      display: flex; gap: 6px; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee;
-    }
-    .panel-actions button {
-      font-size: 10px; padding: 3px 8px; border: 1px solid #bbb;
-      background: #f5f5f5; border-radius: 3px; cursor: pointer;
-    }
-    .panel-actions button.danger { color: #b91c1c; border-color: #fca5a5; }
-    .add-drill-panel {
-      background: #fff; border: 2px solid #2563eb; border-radius: 6px;
-      padding: 12px 14px; margin-bottom: 12px;
-    }
-    .add-drill-panel h2 {
-      font-size: 12px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.04em; margin-bottom: 8px; color: #2563eb;
-    }
-    .add-drill-row {
-      display: grid; grid-template-columns: 1.2fr 2fr 1.5fr auto auto;
-      gap: 8px; align-items: end;
-    }
-    @media (max-width: 800px) { .add-drill-row { grid-template-columns: 1fr 1fr; } }
-    .add-drill-row label { font-size: 10px; font-weight: 600; color: #555; display: block; margin-bottom: 2px; }
-    .add-drill-row input, .add-drill-row select {
-      width: 100%; padding: 6px 8px; border: 1px solid #bbb; border-radius: 4px; font-size: 12px;
-    }
-    .add-drill-row button { padding: 7px 12px; font-weight: 600; border-radius: 4px; cursor: pointer; border: none; }
-    .add-drill-row button.add { background: #2563eb; color: #fff; }
-    .custom-tag { font-size: 9px; background: #dbeafe; color: #1d4ed8; padding: 1px 4px; border-radius: 2px; margin-left: 4px; }
-
-    .preview-label {
-      font-size: 12px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.05em; color: #444; margin: 8px 0 10px;
-      padding-bottom: 4px; border-bottom: 2px solid #222;
-    }
-
-    /* ── PRINT PLAN ── */
-    #print-area {
-      background: #fff;
-      max-width: 8.5in;
-      margin: 0 auto;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-    }
-    #print-area .page {
-      width: 8.5in; min-height: 10.7in;
-      padding: 0.4in 0.45in;
-      page-break-after: always;
+    .tool-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 24px 22px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      min-height: 220px;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
       position: relative;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 8pt;
-      line-height: 1.35;
+      overflow: hidden;
     }
-    #print-area .page:last-child { page-break-after: auto; }
-    #print-area header {
-      border-bottom: 2px solid #111; padding-bottom: 6px; margin-bottom: 10px;
+    .tool-card:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 8px 28px rgba(29, 78, 216, 0.1);
+      transform: translateY(-2px);
     }
-    #print-area header h1 {
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      font-size: 14pt; font-weight: 700;
+    .tool-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity 0.15s;
     }
-    #print-area header .meta {
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      font-size: 7.5pt; color: #444; margin-top: 4px;
-      display: flex; flex-wrap: wrap; gap: 12px;
-    }
-    #print-area h2 {
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      font-size: 8.5pt; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.05em; margin: 10px 0 5px;
-      padding-bottom: 2px; border-bottom: 1px solid #ccc;
-    }
-    #print-area h3 {
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      font-size: 8pt; font-weight: 600; margin: 7px 0 4px; color: #333;
-    }
-    #print-area table {
-      width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 7.5pt;
-    }
-    #print-area th {
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      background: #222; color: #fff; font-weight: 600;
-      text-align: left; padding: 3px 5px; font-size: 7pt;
-    }
-    #print-area td { border: 1px solid #ccc; padding: 3px 5px; vertical-align: top; }
-    #print-area tr:nth-child(even) td { background: #fafafa; }
-    #print-area .note {
-      font-size: 7.5pt; color: #444; margin-bottom: 8px;
-      padding: 5px 8px; background: #f5f5f5; border: 1px solid #ddd;
-    }
-    #print-area pre.seq {
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      font-size: 7.5pt; background: #f9f9f9; border: 1px solid #ddd;
-      padding: 6px 8px; margin-bottom: 8px; white-space: pre-wrap;
-    }
-    #print-area .footer {
-      position: absolute; bottom: 0.4in; left: 0.45in; right: 0.45in;
-      font-size: 6.5pt; color: #888;
-      border-top: 1px solid #ddd; padding-top: 4px;
-      display: flex; justify-content: space-between;
-      font-family: "Helvetica Neue", Arial, sans-serif;
-    }
-    #print-area .empty { color: #999; font-style: italic; font-size: 7.5pt; }
+    .tool-card:hover::before { opacity: 1; }
 
-    @media print {
-      body { background: #fff; }
-      .builder { display: none !important; }
-      #print-area { box-shadow: none; max-width: none; }
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tool-card .tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 14px;
+      width: fit-content;
     }
+    .tool-card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .tool-card p {
+      font-size: 13px;
+      color: var(--muted);
+      flex: 1;
+    }
+    .tool-card ul {
+      margin-top: 12px;
+      padding-left: 16px;
+      font-size: 12px;
+      color: #444;
+    }
+    .tool-card ul li { margin-bottom: 4px; }
+    .tool-card .cta {
+      margin-top: 18px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .tool-card .cta::after { content: " →"; }
+
+    .footer-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+    }
+    .footer-note strong { color: #333; font-weight: 600; }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════ BUILDER UI ═══════════════ -->
-<div class="builder">
+<div class="wrap">
+  <header class="brand">
+    <p class="eyebrow">USA Gymnastics Development Program</p>
+    <h1>Planner</h1>
+    <p>Choose what you want to plan today — full class with drills, or alphabet sheet for PDF.</p>
+  </header>
 
-  <div class="toolbar">
-    <h1>Coach Rosetta Stone — USAG L1–L5</h1>
-    <input type="search" id="drillSearch" placeholder="Search all drills…" oninput="filterDrills(this.value)" style="flex:1;min-width:140px;max-width:220px;padding:6px 10px;border-radius:4px;border:none;font-size:12px;">
-    <button type="button" class="primary" onclick="buildPlan()">Update plan</button>
-    <button type="button" onclick="window.print()">Print / PDF</button>
-    <button type="button" onclick="saveSelections()">Save selections</button>
-    <button type="button" class="ghost" onclick="resetAll()">Reset all</button>
-    <span class="status" id="status"></span>
-  </div>
+  <p class="section-label">What are you planning?</p>
 
-  <div class="setup-row">
-    <div><label>Club</label><input type="text" id="club" placeholder="Club name"></div>
-    <div><label>Date</label><input type="date" id="date"></div>
-    <div><label>Coach</label><input type="text" id="coach" placeholder="Coach name"></div>
-    <div>
-      <label>Day preset (auto-selects focus)</label>
-      <select id="dayPreset" onchange="applyDayPreset()">
-        <option value="">— Manual —</option>
-        <option value="mon">Monday — Vault focus</option>
-        <option value="tue">Tuesday — Bars focus</option>
-        <option value="wed">Wednesday — Beam focus</option>
-        <option value="thu">Thursday — Floor focus</option>
-        <option value="test">Testing day — full battery</option>
-      </select>
-    </div>
-  </div>
+  <nav class="tools">
+    <a class="tool-card" href="Coach-plan.html">
+      <span class="tag">Class plan</span>
+      <h2>Class Builder</h2>
+      <p>Build a full practice — warm-up, events, conditioning, testing battery. Select drills, print multi-page plan.</p>
+      <ul>
+        <li>250+ drills L1–L5</li>
+        <li>Cast angles, kip factory, beam walks</li>
+        <li>Day presets &amp; custom drills</li>
+      </ul>
+      <span class="cta">Open Class Builder</span>
+    </a>
 
-  <div class="add-drill-panel">
-    <h2>Add your own drill — saved in this browser</h2>
-    <div class="add-drill-row">
-      <div><label>Category</label><select id="customCat"></select></div>
-      <div><label>Drill name (universal / gym name)</label><input type="text" id="customLabel" placeholder="e.g. Skin the cat through pike"></div>
-      <div><label>Cue / reps / equipment</label><input type="text" id="customCue" placeholder="e.g. 2 reps · hollow shape"></div>
-      <button type="button" class="add" onclick="addCustomDrill()">Add</button>
-      <button type="button" onclick="exportCustomDrills()" title="Copy JSON backup">Export</button>
-    </div>
-  </div>
+    <a class="tool-card" href="alphabet-class-pdf.html">
+      <span class="tag">Alphabet PDF</span>
+      <h2>Alphabet Sheet</h2>
+      <p>A–Z exercise sheet — one random exercise per letter, full-page print for games or conditioning.</p>
+      <ul>
+        <li>5+ exercises per letter (expandable)</li>
+        <li>Random shuffle button</li>
+        <li>Single-page PDF layout</li>
+      </ul>
+      <span class="cta">Open Alphabet Sheet</span>
+    </a>
+  </nav>
 
-  <div class="selector-grid" id="selector-grid"></div>
-
-  <p class="preview-label">Generated class plan — updates when you click "Update plan"</p>
+  <p class="footer-note">
+    <strong>Planner</strong> runs in your browser — no login. Saves selections locally on each device.<br>
+    Works on GitHub Pages: upload this folder and open <code>index.html</code>.
+  </p>
 </div>
-
-<!-- ═══════════════ PRINT OUTPUT ═══════════════ -->
-<div id="print-area"></div>
-
-<script>
-const STORAGE_KEY = 'coach-rosetta-stone-v4';
-const CUSTOM_KEY = 'coach-rosetta-custom-v1';
-
-function loadCustomDrills() {
-  try {
-    const raw = localStorage.getItem(CUSTOM_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch(e) { return []; }
-}
-
-function saveCustomDrills(list) {
-  localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
-}
-
-function mergeCustomIntoCategories() {
-  const customs = loadCustomDrills();
-  customs.forEach(c => {
-    if (!CATEGORIES[c.cat]) return;
-    if (!CATEGORIES[c.cat].items.find(i => i.id === c.id)) {
-      CATEGORIES[c.cat].items.push({
-        id: c.id, label: c.label, custom: true,
-        cue: c.cue, equip: c.cue, spot: c.cue, target: c.cue,
-        block: c.cue, phase: c.cue, angle: c.cue, time: c.cue
-      });
-    }
-  });
-}
-
-function addCustomDrill() {
-  const cat = document.getElementById('customCat').value;
-  const label = document.getElementById('customLabel').value.trim();
-  const cue = document.getElementById('customCue').value.trim();
-  if (!label) { alert('Enter a drill name'); return; }
-  const id = 'custom_' + Date.now();
-  const list = loadCustomDrills();
-  list.push({ id, cat, label, cue });
-  saveCustomDrills(list);
-  document.getElementById('customLabel').value = '';
-  document.getElementById('customCue').value = '';
-  const checked = {};
-  for (const k of Object.keys(CATEGORIES)) checked[k] = getChecked(k);
-  renderSelectors();
-  for (const [k, ids] of Object.entries(checked)) {
-    ids.forEach(i => { const cb = document.querySelector(`input[data-category="${k}"][value="${i}"]`); if (cb) cb.checked = true; });
-  }
-  const cb = document.querySelector(`input[value="${id}"]`);
-  if (cb) cb.checked = true;
-  document.getElementById('status').textContent = 'Custom drill added';
-  buildPlan();
-}
-
-function removeCustomDrill(id) {
-  if (!confirm('Remove this custom drill?')) return;
-  saveCustomDrills(loadCustomDrills().filter(c => c.id !== id));
-  renderSelectors();
-  buildPlan();
-}
-
-function exportCustomDrills() {
-  const json = JSON.stringify(loadCustomDrills(), null, 2);
-  navigator.clipboard?.writeText(json);
-  alert('Custom drills JSON copied to clipboard (' + loadCustomDrills().length + ' items)');
-}
-
-function getItemAny(id) {
-  for (const cat of Object.values(CATEGORIES)) {
-    const item = cat.items.find(i => i.id === id);
-    if (item) return { ...item, _cat: Object.keys(CATEGORIES).find(k => CATEGORIES[k].items.includes(item)) };
-  }
-  return null;
-}
-
-function filterDrills(q) {
-  const query = (q || '').toLowerCase().trim();
-  document.querySelectorAll('.check-list label').forEach(lbl => {
-    lbl.style.display = !query || lbl.textContent.toLowerCase().includes(query) ? '' : 'none';
-  });
-}
-
-const CATEGORIES = {
-  blocks: {
-    title: 'Class blocks (timeline)',
-    wide: true,
-    defaultAll: true,
-    items: [
-      { id: 'b_act', label: 'Activation (0–10 min)', time: '0–10', block: 'Activation' },
-      { id: 'b_mov', label: 'Movement line / sequences (10–18 min)', time: '10–18', block: 'Movement line' },
-      { id: 'b_cond', label: 'Conditioning circuit (18–30 min)', time: '18–30', block: 'Conditioning' },
-      { id: 'b_flex', label: 'Flexibility (30–45 min)', time: '30–45', block: 'Flexibility' },
-      { id: 'b_line', label: 'Across-floor lines (45–55 min)', time: '45–55', block: 'Line drills' },
-      { id: 'b_vault', label: 'Vault (55–80 min)', time: '55–80', block: 'Vault' },
-      { id: 'b_bars', label: 'Bars (80–115 min)', time: '80–115', block: 'Bars' },
-      { id: 'b_beam', label: 'Beam (115–140 min)', time: '115–140', block: 'Beam' },
-      { id: 'b_floor', label: 'Floor (140–170 min)', time: '140–170', block: 'Floor' },
-      { id: 'b_close', label: 'Close (170–180 min)', time: '170–180', block: 'Close' },
-    ]
-  },
-  warmup: {
-    title: 'Universal warm-up',
-    tall: true,
-    items: [
-      { id: 'wu_run', label: 'Run the lines (4 walls) — 2 min', cue: 'High knees, butt kicks, skips' },
-      { id: 'wu_jump', label: 'Jumps in place — 1 min', cue: 'Tuck, pike, straddle, full turn' },
-      { id: 'wu_froll', label: 'Forward rolls — 3 reps', cue: 'Tuck, pike, profile at wall' },
-      { id: 'wu_broll', label: 'Backward rolls — 3 reps', cue: 'Tuck, arms by ears' },
-      { id: 'wu_hs', label: 'Wall handstand — 3 x 10 sec', cue: 'Belly-to-wall, back-to-wall' },
-      { id: 'wu_bridge', label: 'Bridge / shoulder openers — 2 min', cue: 'Floor or block' },
-      { id: 'wu_leap', label: 'Leaps on line — 2 passes', cue: 'Step, relevé, leap' },
-      { id: 'wu_heel', label: 'Heel walk — 1 min', cue: 'Toes up, tall posture' },
-      { id: 'wu_releve', label: 'Relevé walk — 1:30', cue: 'Toes only, core tight' },
-      { id: 'wu_skip', label: 'Skipping — 1 min', cue: 'High skip / power skip' },
-      { id: 'wu_chase', label: 'Chase (pairs) — 2 min', cue: 'Match partner form' },
-      { id: 'wu_pike', label: 'Pike walk — 1:30', cue: 'Hips high, small steps' },
-      { id: 'wu_arm', label: 'Arm circles — 10 each way', cue: 'Small then large' },
-      { id: 'wu_wrist', label: 'Wrist rocks + press — 20 sec', cue: 'Prep for hands' },
-      { id: 'wu_bear', label: 'Bear crawl — 2 lengths', cue: 'Knees off floor' },
-      { id: 'wu_crab', label: 'Crab walk — 2 lengths', cue: 'Hips up' },
-      { id: 'wu_lunge', label: 'Walking lunges — 1 floor length', cue: 'Torso upright' },
-      { id: 'wu_side', label: 'Side shuffle + sprint back', cue: 'Stay low, quick feet' },
-      { id: 'wu_hop', label: 'Hop series — 30 sec', cue: 'One foot, other foot, both' },
-      { id: 'wu_stretch', label: 'Dynamic leg swings — 10 each', cue: 'Front/back, side to side' },
-    ]
-  },
-  movement: {
-    title: 'Movement sequences A / B / C',
-    xl: true,
-    items: [
-      { id: 'mv_march', label: 'A1 — March, skip, gallop (down and back)' },
-      { id: 'mv_froll', label: 'A2 — 3 forward rolls tucked' },
-      { id: 'mv_broll', label: 'A3 — 3 backward rolls' },
-      { id: 'mv_cw', label: 'A4 — Cartwheel both sides (or block prep)' },
-      { id: 'mv_releve', label: 'A5 — 5 relevé walks on toes' },
-      { id: 'mv_stick', label: 'A6 — Run and stick on line' },
-      { id: 'mv_sprint', label: 'B1 — 3-step sprint + hurdle on line' },
-      { id: 'mv_blockhs', label: 'B2 — 5 block handstands (floor)' },
-      { id: 'mv_ro', label: 'B3 — Round-off on line to mat' },
-      { id: 'mv_leapcat', label: 'B4 — Leap + cat leap on dance floor' },
-      { id: 'mv_hollow', label: 'B5 — Hollow to arch x5 in place' },
-      { id: 'mv_chasse', label: 'Chassé, chassé, leap' },
-      { id: 'mv_cat', label: 'Cat leap or stag jump' },
-      { id: 'mv_hsroll', label: 'Handstand forward roll out' },
-      { id: 'mv_brollpu', label: 'Backward roll to push-up hold' },
-      { id: 'mv_candle', label: 'Candlestick roll to stand' },
-      { id: 'mv_passé', label: 'C1 — Passé balance 3 sec each foot' },
-      { id: 'mv_coupe', label: 'C2 — Coupé + développé at wall bar' },
-      { id: 'mv_straight', label: 'C3 — Straight jump series on floor line' },
-      { id: 'mv_tape', label: 'C4 — Walk on floor tape (beam line)' },
-      { id: 'mv_relevefb', label: 'C5 — Relevé walk forward / backward' },
-      { id: 'mv_pivot', label: 'Pivot turn on line — 3 each way' },
-      { id: 'mv_fullturn', label: 'Full turn on line — 2 each way' },
-    ]
-  },
-  conditioning: {
-    title: 'Conditioning — universal names',
-    xxl: true,
-    items: [
-      { id: 'c_hollow', label: 'Hollow rocks', cue: '15 reps · testing standard' },
-      { id: 'c_hollowh', label: 'Hollow hold', cue: '15–30 sec · ribs down' },
-      { id: 'c_vup', label: 'V-ups', cue: '15 reps · testing standard' },
-      { id: 'c_ropehalf', label: '½ rope climb', cue: 'Legless or with feet · testing /15' },
-      { id: 'c_ropefull', label: 'Full rope climb', cue: 'L4–L5 strength' },
-      { id: 'c_legliftL', label: 'L leg lifts (single leg)', cue: '4 each leg · bar or floor' },
-      { id: 'c_leglift', label: 'Leg lifts on low bar', cue: '8–12 straight legs' },
-      { id: 'c_straddlehold', label: 'Straddle hold', cue: '5 sec · testing standard' },
-      { id: 'c_chinup', label: 'Chin-ups', cue: '5 reps · full ROM' },
-      { id: 'c_chinhold', label: 'Chin-up hold', cue: '10 sec · over bar' },
-      { id: 'c_chin', label: 'Chin hold (assisted)', cue: '10 sec · feet help OK' },
-      { id: 'c_whs30', label: 'Wall handstand hold', cue: '30 sec · testing standard' },
-      { id: 'c_whs', label: 'Wall handstand hold', cue: '3 x 15 sec · daily' },
-      { id: 'c_lhold', label: 'L-hold in support (parallel bars or floor)', cue: '10 sec · testing' },
-      { id: 'c_candlehold', label: 'Candle hold', cue: '5 sec · shoulders to floor' },
-      { id: 'c_candle', label: 'Candlestick roll to stand', cue: '5 reps · dynamic' },
-      { id: 'c_dips', label: 'Dips (parallel bars or dip station)', cue: '5 reps' },
-      { id: 'c_skincat', label: 'Skin the cat through pike', cue: '2 reps · shoulder mobility + strength' },
-      { id: 'c_squatjump', label: 'Squat jumps', cue: '10 reps · stick landing' },
-      { id: 'c_squat', label: 'Squat jumps + stick', cue: '8 reps · quiet feet' },
-      { id: 'c_punch', label: 'Punch jumps on panel mats', cue: '20 in a row (IAR) · vault power' },
-      { id: 'c_cardio', label: 'Cardio run', cue: '5 min · testing endurance' },
-      { id: 'c_push', label: 'Push-ups', cue: '5–15 · full or modified' },
-      { id: 'c_plank', label: 'Forearm plank', cue: '20–30 sec' },
-      { id: 'c_arch', label: 'Arch hold (superman)', cue: '10 sec · hollow counter' },
-      { id: 'c_cast', label: 'Cast push-up shape on floor', cue: '8 reps · bars prep' },
-      { id: 'c_pull', label: 'Pull-ups / band assist', cue: '3 x 5' },
-      { id: 'c_press', label: 'Press handstand (wall or parallettes)', cue: 'L4–L5' },
-      { id: 'c_tuckplanche', label: 'Tuck planche lean / planche prep', cue: 'Advanced' },
-      { id: 'c_box', label: 'Box jumps + stick', cue: '6 reps' },
-      { id: 'c_ankle', label: 'Ankle stability — single leg balance', cue: '20 sec each · beam' },
-      { id: 'c_tap', label: 'Tap swing shape on floor', cue: '8 reps · L4–L5' },
-      { id: 'c_burpee', label: 'Burpees', cue: '8–10 · conditioning circuit' },
-      { id: 'c_mtn', label: 'Mountain climbers', cue: '30 sec' },
-      { id: 'c_bicycle', label: 'Bicycle crunches', cue: '20 each side' },
-    ]
-  },
-  flex: {
-    title: 'Flexibility — universal names',
-    xxl: true,
-    items: [
-      { id: 'f_pike', label: 'Pike stretch seated (S)', cue: '15 sec · hamstrings' },
-      { id: 'f_pikeR', label: 'Pike stretch — right leg (R)', cue: '15 sec · testing S/R/L' },
-      { id: 'f_pikeL', label: 'Pike stretch — left leg (L)', cue: '15 sec · testing S/R/L' },
-      { id: 'f_rs', label: 'Right split hold', cue: '15–30 sec' },
-      { id: 'f_ls', label: 'Left split hold', cue: '15–30 sec' },
-      { id: 'f_ms', label: 'Middle / straddle split hold', cue: '15 sec · hands on floor' },
-      { id: 'f_splitnohands', label: 'Split hold R & L — no hands', cue: '15 sec each · floor testing' },
-      { id: 'f_splithands', label: 'Split hold R / L / M — with hands', cue: '15 sec · testing standard' },
-      { id: 'f_straddlechest', label: 'Straddle split on floor — chest down', cue: '15 sec · pancake prep' },
-      { id: 'f_pancake', label: 'Pancake stretch', cue: 'Adductors, middle split' },
-      { id: 'f_bridge', label: 'Bridge hold', cue: '5–15 sec · shoulders over hands' },
-      { id: 'f_bridgewall', label: 'Bridge hold at wall', cue: '15 sec · floor testing' },
-      { id: 'f_bridgelow', label: 'Bridge hold on low beam', cue: '5 sec · beam testing' },
-      { id: 'f_shoulder', label: 'Shoulder stretch at wall', cue: 'Cast / kip prep' },
-      { id: 'f_wrist', label: 'Wrist rocks and extension', cue: 'Handstand prep' },
-      { id: 'f_quad', label: 'Quad stretch — standing or kneeling', cue: '20 sec each' },
-      { id: 'f_calves', label: 'Calf stretch on wall', cue: '20 sec · relevé prep' },
-      { id: 'f_lat', label: 'Lat stretch — bar hang or side bend', cue: 'Cast / kip' },
-      { id: 'f_saddle', label: 'Saddle / middle split seated', cue: 'Straddle skills' },
-      { id: 'f_oversplit', label: 'Oversplit on mat stack', cue: 'L4–L5 leaps' },
-      { id: 'f_leap', label: 'Standing split leap stretch', cue: 'Dance' },
-      { id: 'f_wallsplit', label: 'Wall split oversplit stretch', cue: 'Advanced' },
-      { id: 'f_frog', label: 'Frog stretch — hip opener', cue: 'Beam turnout' },
-      { id: 'f_neck', label: 'Gentle neck rolls', cue: 'Cool-down only' },
-    ]
-  },
-  lines: {
-    title: 'Across-floor lines (pick 1 or more)',
-    wide: true,
-    items: [
-      { id: 'ln_a', label: 'Line A — Power: sprint, stretch jump x3, tuck x3, HS, bridge walk', when: 'Monday / vault weeks' },
-      { id: 'ln_b', label: 'Line B — Dance: chassé leap, cat leap, HS roll, back roll push-up, candlestick', when: 'Tuesday / dance weeks' },
-      { id: 'ln_c', label: 'Line C — Shapes: cartwheel, RO prep, HS-bridge, back roll, half-turn jumps', when: 'Wednesday / tumble prep' },
-      { id: 'ln_d', label: 'Line D — Beam feet: relevé F/B, passé, straight jumps, coupé, tape walk', when: 'Before beam / Thursday' },
-      { id: 'ln_e', label: 'Line E — Vault run: 6-step run, hurdle, block HS shape, stick jump', when: 'Vault technique days' },
-      { id: 'ln_f', label: 'Line F — Bars prep: cast shape walk, hollow hold, chin hold, leg lifts', when: 'Bars / kip days' },
-      { id: 'ln_g', label: 'Line G — L3+ tumbling: RO, rebound, BHS shape on floor', when: 'Floor power days' },
-      { id: 'ln_h', label: 'Line H — L4 dance: split leap 120°, full turn, chassé, passé turn', when: 'Routine / dance weeks' },
-    ]
-  },
-  vault: {
-    title: 'Vault — L1 to L5 (all drills)',
-    xl: true,
-    items: [
-      { id: 'v_run6', label: 'L1 — 6-step run + hurdle x4', equip: 'Cones', spot: 'No' },
-      { id: 'v_squat', label: 'L1 — Squat onto mats (progression)', equip: 'Stack', spot: 'Optional' },
-      { id: 'v_stretch', label: 'L1 — Stretch jump to HS fall', equip: 'Board + mats', spot: 'Yes' },
-      { id: 'v_run', label: 'L2 — Accelerated 6-step run + hurdle x4', equip: 'Cones', spot: 'No' },
-      { id: 'v_jump', label: 'L2 — Jump to HS on 16" stack x3', equip: 'Board + stack', spot: 'Yes' },
-      { id: 'v_full', label: 'L2 — Full vault (jump to HS, fall to back) x2', equip: 'Board + 16"', spot: 'Minimal' },
-      { id: 'v_fall', label: 'L2 — HS hold 3 sec, fall to back', equip: 'Stack', spot: 'Yes' },
-      { id: 'v_sprint3', label: 'Sprint last 3 steps x6', equip: 'Cones', spot: 'No' },
-      { id: 'v_hsflat', label: 'L3 — Handstand flatback on stack', equip: 'Stack', spot: 'Yes' },
-      { id: 'v_hs16', label: 'L3 — Handspring over 16" mat', equip: 'Board + 16"', spot: 'Yes' },
-      { id: 'v_hs24', label: 'L3 — Handspring over 24" mat', equip: 'Board + 24"', spot: 'Yes' },
-      { id: 'v_hs32', label: 'L3 — Handspring over 32" mat x2–4', equip: 'Board + 32"', spot: 'As needed' },
-      { id: 'v_block', label: 'L4 — Block HS on vault table', equip: 'Table', spot: 'Yes' },
-      { id: 'v_table', label: 'L4 — Handspring over table x4–6', equip: 'Full setup', spot: 'Minimal' },
-      { id: 'v_stick', label: 'Stick jumps from board x5', equip: 'Board', spot: 'No' },
-      { id: 'v_land', label: 'Landing drills — stick from box', equip: 'Box', spot: 'No' },
-      { id: 'v_pres', label: 'Presentation rep x1', equip: 'Full setup', spot: 'As needed' },
-      { id: 'v_video', label: 'L4–L5 — Video 1 rep for review', equip: 'Phone/camera', spot: 'No' },
-      { id: 'v_resist', label: 'L3+ — Resistance band sprint drill', equip: 'Band + partner', spot: 'No' },
-      { id: 'v_boardhs', label: 'Block HS shape on mat (no table)', equip: 'Mats', spot: 'No' },
-      { id: 'v_hurdle', label: 'Hurdle shape on line — daily', equip: 'Line', spot: 'No' },
-      { id: 'v_l5full', label: 'L5 — 5–7 full vaults (quality reps)', equip: 'Full setup', spot: 'As needed' },
-      { id: 'vt_hsblock', label: 'Handstand block on floor (FX)', equip: 'Block', spot: 'No' },
-      { id: 'vt_runwhale', label: '7/9/11-step run — punch straight jump on whale mat', equip: 'Whale mat', spot: 'No' },
-      { id: 'vt_jumphs8', label: 'Jump to handstand on 2–3 x 8" mats — correct arm circle', equip: '8" stack', spot: 'Yes' },
-      { id: 'vt_jumphsleg', label: 'Jump to HS on mats — bad leg start + hurdle foot', equip: '8" stack', spot: 'Yes' },
-      { id: 'vt_run45', label: 'Vault run timed — 4.5 sec standard', equip: 'Cones', spot: 'No' },
-    ]
-  },
-  bars_cast: {
-    title: 'Bars — CAST by angle (full progression)',
-    xl: true,
-    items: [
-      { id: 'bc_shape', label: 'Cast shape on floor (push-up position)', angle: 'Prep — no cast', spot: 'No', cue: 'Open shoulders, hollow' },
-      { id: 'bc_knees', label: 'Cast from knees on mat', angle: 'Intro', spot: 'Yes', cue: 'Small push, hips stay low' },
-      { id: 'bc_feet', label: 'Cast push-ups — feet on floor x8', angle: 'Prep', spot: 'No', cue: 'Shoulders over bar' },
-      { id: 'bc_45below', label: 'Cast to 45° below horizontal', angle: '−45°', spot: 'Yes', cue: 'First cast learning step' },
-      { id: 'bc_small', label: 'Small cast — hips leave bar slightly', angle: '−20° to −45°', spot: 'Yes', cue: 'Do not throw head back' },
-      { id: 'bc_horiz', label: 'Cast to horizontal (parallel to floor)', angle: '0° — L2 req', spot: 'Minimal', cue: 'Shoulders open, ribs in' },
-      { id: 'bc_pause', label: 'Cast to horizontal — pause 3 sec', angle: '0° hold', spot: 'As needed', cue: 'Control at top' },
-      { id: 'bc_45above', label: 'Cast to 45° above horizontal', angle: '+45°', spot: 'As needed', cue: 'L3 progression' },
-      { id: 'bc_nearvert', label: 'Cast to near-vertical (HS prep)', angle: '+70° to 90°', spot: 'Yes', cue: 'L4–L5 goal' },
-      { id: 'bc_hs', label: 'Cast to handstand', angle: '90° vertical — L5', spot: 'Yes', cue: 'Stacked shoulders over bar' },
-      { id: 'bc_3x', label: '3 casts in a row to horizontal', angle: '0° x3', spot: 'No', cue: 'Rhythm and re-grasp' },
-      { id: 'bc_undershoot', label: 'Cast undershoot to bar', angle: 'Link drill', spot: 'Yes', cue: 'Return to bar' },
-      { id: 'bc_bhc', label: 'Cast → back hip circle link', angle: 'Combo', spot: 'Yes', cue: 'L2–L3 routine' },
-      { id: 'bc_squat', label: 'Cast → squat on link', angle: 'Combo', spot: 'Yes', cue: 'L3–L4' },
-      { id: 'bc_wall', label: 'Open-shoulder cast drill at wall', angle: 'Floor prep', spot: 'No', cue: 'Shoulder flexibility' },
-      { id: 'bc_hollow', label: 'Hollow body cast on floor', angle: 'Shape', spot: 'No', cue: 'Core before cast' },
-      { id: 'bc_spothip', label: 'Cast with spot at hips', angle: 'Any level', spot: 'Yes', cue: 'Teach timing' },
-      { id: 'bc_mat', label: 'Cast over stacked mat (confidence)', angle: '0°+', spot: 'Yes', cue: 'Fear reduction' },
-    ]
-  },
-  bars_kip_floor: {
-    title: 'Bars — KIP floor drills (mats & panels)',
-    xxl: true,
-    items: [
-      { id: 'bkf_2panel', label: 'Kip shape on floor — hands on 2 panel mats', equip: '2 panel mats', cue: 'Glide body, shoulders over hands, hollow' },
-      { id: 'bkf_pike2', label: 'Pike compression between 2 panel mats', equip: '2 panels vertical', cue: 'Toes shoot up between mats — toe shoot shape' },
-      { id: 'bkf_angle', label: 'Open-angle recovery — fall back between 2 side mat stacks', equip: '2 mat stacks (L/R)', cue: 'Open shoulders, trust the angle, recover to hollow' },
-      { id: 'bkf_stem', label: 'Stem rise on floor bar / PVC on blocks', equip: 'Floor bar or PVC', cue: 'Wrist shift, hips to bar' },
-      { id: 'bkf_gliderock', label: 'Glide rocker — glide shape rock back/forward', equip: 'Floor', cue: 'Feel extension → compression' },
-      { id: 'bkf_candle', label: 'Candlestick roll to open — kip shape at top', equip: 'Floor', cue: 'Fast open to glide shape' },
-      { id: 'bkf_wall', label: 'Wall squat + jump to kip shape', equip: 'Wall', cue: 'Explosive hip drive prep' },
-      { id: 'bkf_band', label: 'Floor kip with resistance band over bar', equip: 'Band + low bar', cue: 'Band assists hip rise' },
-      { id: 'bkf_cheese', label: 'Toe shoot on cheese mat incline', equip: 'Incline mat', cue: 'Compression with gravity assist' },
-      { id: 'bkf_hollow', label: 'Hollow hold in glide shape — 10 sec', equip: 'Floor', cue: 'Core before bar work' },
-      { id: 'bkf_ext', label: 'Glide extension hold on floor — 5 sec', equip: 'Floor line', cue: 'Long body, shoulders open' },
-      { id: 'bkf_jump', label: 'Jump to bar from standing — land in front support', equip: 'Low bar', cue: 'Mount prep' },
-      { id: 'bkf_tramp', label: 'Glide extension on trampoline / rod floor', equip: 'Tramp', cue: 'Feel flight in glide' },
-      { id: 'bkf_pikehold', label: 'Pike hold at bar — feet to bar x8', equip: 'Low bar', cue: 'Compression strength' },
-      { id: 'bkf_single', label: 'Single panel — toe tap over panel to bar', equip: '1 panel', cue: 'One-leg compression drill' },
-      { id: 'bkf_partner', label: 'Partner assist — lift at hips in kip shape', equip: 'Partner', cue: 'Feel correct timing' },
-      { id: 'bkf_video', label: 'Video glide → toe shoot on floor (no bar)', equip: 'Phone', cue: 'Shape awareness' },
-    ]
-  },
-  bars_kip: {
-    title: 'Bars — KIP on bar (factory & progressions)',
-    xxl: true,
-    items: [
-      { id: 'bk_glide5', label: 'Glide swing x5', phase: 'Glide', spot: 'No', cue: 'Long body, toes to floor' },
-      { id: 'bk_glidepause', label: 'Glide pause at full extension', phase: 'Glide', spot: 'No', cue: 'Step back if kip fails' },
-      { id: 'bk_hollowglide', label: 'Hollow glide hold at extension', phase: 'Glide', spot: 'No', cue: 'Core tight' },
-      { id: 'bk_toeshoot', label: 'Toe shoot to bar (feet to bar drill)', phase: 'Pre-kip', spot: 'No', cue: 'Compression at bar' },
-      { id: 'bk_stem', label: 'Stem rise drill on bar', phase: 'Pre-kip', spot: 'No', cue: 'Wrist shift, hips to bar' },
-      { id: 'bk_leglift', label: 'Leg lift compression at bar x8', phase: 'Pre-kip', spot: 'No', cue: 'Toes to bar' },
-      { id: 'bk_jump', label: 'Jump kip with spot at hips', phase: 'Kip', spot: 'Yes', cue: 'Minimal spot over time' },
-      { id: 'bk_spot', label: 'Kip with coach spot (standard)', phase: 'Kip', spot: 'Yes', cue: 'Glide → toes up → extend' },
-      { id: 'bk_band', label: 'Kip with resistance band', phase: 'Kip', spot: 'Band', cue: 'Factory station' },
-      { id: 'bk_lowbar', label: 'Kip on low bar with mat stack behind', phase: 'Kip', spot: 'Yes', cue: 'Regression' },
-      { id: 'bk_alone', label: 'Kip alone', phase: 'Kip', spot: 'No', cue: 'L4 goal' },
-      { id: 'bk_glidekip', label: 'Glide kip connected (no pause)', phase: 'Kip', spot: 'Minimal', cue: 'Routine quality' },
-      { id: 'bk_kipcast', label: 'Kip + cast to horizontal', phase: 'Link', spot: 'As needed', cue: 'L4 routine' },
-      { id: 'bk_kipcast45', label: 'Kip + cast to 45° above horizontal', phase: 'Link', spot: 'Yes', cue: 'L5 prep' },
-      { id: 'bk_factory', label: 'Kip factory — 4-station rotation', phase: 'Station', spot: 'Rotating', cue: 'Glide / floor mats / band / bar' },
-      { id: 'bk_longhang', label: 'Long hang pullover (alt. mount)', phase: 'Mount', spot: 'Yes', cue: 'Some L4 athletes' },
-      { id: 'bk_negative', label: 'Negative glide — slow extension down', phase: 'Strength', spot: 'No', cue: 'Control' },
-      { id: 'bk_paused', label: 'Kip with pause at toe shoot', phase: 'Drill', spot: 'Yes', cue: 'Isolate compression' },
-      { id: 'bk_multiple', label: '3 glide swings → 1 kip attempt', phase: 'Rhythm', spot: 'As needed', cue: 'Build pattern' },
-    ]
-  },
-  bars_skills: {
-    title: 'Bars — mounts, circles, dismounts',
-    xl: true,
-    items: [
-      { id: 'bs_hang', label: 'Hang hold 10 sec', spot: 'No', queue: 'Arch hold floor' },
-      { id: 'bs_chin', label: 'Chin hold 10 sec', spot: 'No', queue: 'Hollow hold' },
-      { id: 'bs_pullmat', label: 'Pullover with mat spot', spot: 'Yes', queue: 'Chin hold' },
-      { id: 'bs_pull', label: 'Pullover alone', spot: 'Minimal', queue: 'Cast shape floor' },
-      { id: 'bs_glide', label: 'Glide swing low bar x5', spot: 'No', queue: 'Hang hold' },
-      { id: 'bs_bhcmat', label: 'Back hip circle with mat behind', spot: 'Yes', queue: 'Glide' },
-      { id: 'bs_bhc', label: 'Back hip circle alone', spot: 'Minimal', queue: 'BHC shape floor' },
-      { id: 'bs_bhcsh', label: 'BHC shape on floor (hips on block)', spot: 'No', queue: '—' },
-      { id: 'bs_fhcmat', label: 'Front hip circle with mat', spot: 'Yes', queue: 'Cast horizontal' },
-      { id: 'bs_fhc', label: 'Front hip circle alone', spot: 'Minimal', queue: '—' },
-      { id: 'bs_fhccast', label: 'FHC + small cast', spot: 'Yes', queue: 'L3 element' },
-      { id: 'bs_undersw', label: 'Underswing dismount', spot: 'Yes', queue: '—' },
-      { id: 'bs_sole', label: 'Sole circle dismount prep', spot: 'Yes', queue: 'L3+' },
-      { id: 'bs_squatlow', label: 'Squat on to low bar', spot: 'Yes', queue: 'Cast prep' },
-      { id: 'bs_pikeon', label: 'Pike on to low bar', spot: 'Yes', queue: 'L3–L4' },
-      { id: 'bs_jumphb', label: 'Jump to high bar', spot: 'Yes', queue: 'L4+' },
-      { id: 'bs_tap', label: 'Tap swing on high bar', spot: 'No', queue: 'L4–L5' },
-      { id: 'bs_taphalf', label: 'Tap swing ½ turn', spot: 'Yes', queue: 'L5' },
-      { id: 'bs_clearhip', label: 'Clear hip circle prep', spot: 'Yes', queue: 'L5' },
-      { id: 'bs_stalder', label: 'Stalder prep / mill circle', spot: 'Yes', queue: 'L5' },
-      { id: 'bs_stretchd', label: 'Stretch jump dismount off LB', spot: 'Minimal', queue: 'L3' },
-      { id: 'bs_routine', label: 'Full or partial bars routine', spot: 'As needed', queue: '—' },
-      { id: 'bs_mini', label: 'Mini routine x1 each athlete', spot: 'As needed', queue: '—' },
-      { id: 'bt_blocklb', label: 'Block off low bar — land on board (correct shape)', spot: 'Yes', queue: '—' },
-      { id: 'bt_bodyslide', label: 'Front support — 3 body slides to knees, hold 3s last', spot: 'No', queue: '—' },
-      { id: 'bt_castbhc', label: '45° cast → back hip circle', spot: 'Yes', queue: '—' },
-      { id: 'bt_candleshoot', label: 'Front support drop to candle — shoot to landing', spot: 'Yes', queue: 'Head position' },
-    ]
-  },
-  beam_feet: {
-    title: 'Beam — walks, holds & footwork',
-    xxl: true,
-    items: [
-      { id: 'bbf_releve5', label: 'Relevé hold — 5 seconds', block: 'Hold', cue: 'Tall body, core tight, toes only' },
-      { id: 'bbf_squatwalk', label: 'Squat walk on beam', block: 'Walk', cue: 'Low hips, arms forward, full length' },
-      { id: 'bbf_pikewalk', label: 'Pike walk on beam', block: 'Walk', cue: 'Hips high, small steps, hands on beam' },
-      { id: 'bbf_releve', label: 'Relevé walk forward + pause at end', block: 'Walk', cue: 'Toes only' },
-      { id: 'bbf_relevefb', label: 'Relevé walk forward / backward', block: 'Walk', cue: 'Eyes up' },
-      { id: 'bbf_lock', label: 'Relevé lock stand — 10 sec', block: 'Hold', cue: 'Stillness' },
-      { id: 'bbf_coupe', label: 'Coupé walk full beam', block: 'Walk', cue: 'Pointed toe' },
-      { id: 'bbf_passé', label: 'Passé walk full beam', block: 'Walk', cue: 'Turnout, tall posture' },
-      { id: 'bbf_heel', label: 'Heel walk on beam', block: 'Walk', cue: 'Toes pulled up' },
-      { id: 'bbf_toe', label: 'Toe walk / high relevé walk', block: 'Walk', cue: 'Maximum relevé' },
-      { id: 'bbf_flamingo', label: 'Flamingo stand — 5 sec each foot', block: 'Hold', cue: 'Balance' },
-      { id: 'bbf_arab', label: 'Arabesque walk — 3 steps', block: 'Walk', cue: 'Square hips' },
-      { id: 'bbf_scale', label: 'Scale hold at wall → beam', block: 'Hold', cue: 'Back leg straight' },
-      { id: 'bbf_lunge', label: 'Lunge walk on beam', block: 'Walk', cue: 'Dance prep' },
-      { id: 'bbf_side', label: 'Side relevé walk', block: 'Walk', cue: 'Crossing step' },
-      { id: 'bbf_floor', label: 'All walks on floor line first', block: 'Prep', cue: 'Before beam' },
-      { id: 'bbf_tape', label: 'Floor tape line — imaginary beam', block: 'Prep', cue: 'Eyes forward' },
-      { id: 'bbf_panel', label: 'Panel beam / low beam walks', block: 'Prep', cue: 'Build confidence' },
-    ]
-  },
-  beam_skills: {
-    title: 'Beam — jumps, turns & dance',
-    xxl: true,
-    items: [
-      { id: 'bbs_snap', label: 'Snap turn on beam (½ turn, heel-snap)', block: 'Turn', cue: 'Tight core, spot the end' },
-      { id: 'bbs_half', label: 'Straight jump ½ turn', block: 'Jump', cue: 'Heel-snap prep' },
-      { id: 'bbs_full', label: 'Full turn on relevé', block: 'Turn', cue: 'Arms in crown' },
-      { id: 'bbs_pivot', label: 'Pivot turn — 3 each way', block: 'Turn', cue: 'Flat foot on relevé' },
-      { id: 'bbs_straight', label: 'Straight jump x5', block: 'Jump', cue: 'Stretch body' },
-      { id: 'bbs_stretch', label: 'Stretch jump x5', block: 'Jump', cue: 'Hit split in air' },
-      { id: 'bbs_tuck', label: 'Tuck jump on beam', block: 'Jump', cue: 'Knees up' },
-      { id: 'bbs_split', label: 'Split jump on beam', block: 'Jump', cue: 'Even splits' },
-      { id: 'bbs_leap', label: 'Split leap on beam', block: 'Dance', cue: 'Floor first' },
-      { id: 'bbs_lever', label: 'Lever hold 3 sec each leg', block: 'Skill', cue: 'L2 element' },
-      { id: 'bbs_swing', label: 'Leg swing — forward / side', block: 'Dance', cue: 'Control' },
-      { id: 'bbs_echappe', label: 'Echappé prep (side to straddle)', block: 'Dance', cue: 'On floor line' },
-      { id: 'bbs_chasse', label: 'Chassé on beam', block: 'Dance', cue: 'Light feet' },
-      { id: 'bbs_attitude', label: 'Attitude turn prep', block: 'Dance', cue: 'L4+' },
-      { id: 'bbs_dance', label: 'Dance passage — leap + turn', block: 'Routine', cue: 'Crown arms' },
-      { id: 'bbs_mount', label: 'Jump to stand mount', block: 'Mount', cue: 'Stick on landing' },
-      { id: 'bt_seesaw', label: 'See-saw on low beam x3 IAR', block: 'Flex/strength', cue: 'Testing standard' },
-      { id: 'bt_vsit', label: 'V-sit hold 3 sec — good leg up, squat tuck', block: 'Strength', cue: 'Low beam' },
-      { id: 'bt_plie10', label: 'Plie into relevé hold — 10 sec', block: 'Hold', cue: 'Testing standard' },
-      { id: 'bt_kickseries', label: 'Kick front, kick back, plie, relevé hold 2 sec', block: 'Dance', cue: 'Series' },
-    ]
-  },
-  beam_acro: {
-    title: 'Beam — acro, HS & dismounts',
-    xxl: true,
-    items: [
-      { id: 'bba_cwpan', label: 'Cartwheel on panel → low beam', block: 'Acro', cue: 'Hand placement' },
-      { id: 'bba_cwlow', label: 'Cartwheel on low beam', block: 'Acro', cue: 'Look at hands' },
-      { id: 'bba_cw', label: 'Cartwheel on regulation beam', block: 'Acro', cue: 'L4+' },
-      { id: 'bba_hswall', label: 'Handstand at wall 2 x 10 sec', block: 'Prep', cue: 'Before beam HS' },
-      { id: 'bba_hs', label: 'Handstand on beam (low → reg)', block: 'Acro', cue: 'L3–L4' },
-      { id: 'bba_sidehs', label: 'Side handstand at wall → beam', block: 'Dismount prep', cue: 'L4' },
-      { id: 'bba_sidehsd', label: 'Side HS ¼ dismount progression', block: 'Dismount', cue: 'Mat stack' },
-      { id: 'bba_bwo', label: 'Back walkover progression', block: 'Acro', cue: 'Line → low beam' },
-      { id: 'bba_bwo_reg', label: 'Back walkover on regulation beam', block: 'Acro', cue: 'L4+ spot' },
-      { id: 'bba_roll', label: 'Forward roll on low beam (where allowed)', block: 'Acro', cue: 'Check gym policy' },
-      { id: 'bba_dism', label: 'Straight jump dismount — stick', block: 'Dismount', cue: 'L2–L3' },
-      { id: 'bba_round', label: 'Round-off dismount prep (floor)', block: 'Dismount', cue: 'L5 prep' },
-      { id: 'bba_btd', label: 'Back tuck dismount progression', block: 'Dismount', cue: 'L5' },
-      { id: 'bba_link', label: 'Link 2 skills — no long pause', block: 'Routine', cue: 'Flow' },
-      { id: 'bba_partial', label: 'Partial / ½ beam routine', block: 'Routine', cue: 'Music optional' },
-      { id: 'bba_full', label: 'Full beam routine', block: 'Routine', cue: 'Competition order' },
-    ]
-  },
-  floor_shapes: {
-    title: 'Floor — shapes, bridge & limber',
-    xxl: true,
-    items: [
-      { id: 'fxs_limber', label: 'Handstand limber — HS → bridge → stand', time: '5 min', block: 'Shape', cue: 'Also called limber; control through bridge' },
-      { id: 'fxs_hsblk', label: 'Handstand on block', time: '5 min', block: 'Shape', cue: 'Shoulders open, ribs in' },
-      { id: 'fxs_kick', label: 'Kickover from bridge', time: '5 min', block: 'Shape', cue: 'Lead leg kicks, spot at waist' },
-      { id: 'fxs_backkick', label: 'Back kickover from bridge', time: '5 min', block: 'Shape', cue: 'Progression to walkover' },
-      { id: 'fxs_wallkick', label: 'Kickover at wall / with block', time: '5 min', block: 'Shape', cue: 'Reduce fear' },
-      { id: 'fxs_bridge', label: 'Bridge hold — shoulders over hands', time: '3 min', block: 'Shape', cue: 'Open shoulders' },
-      { id: 'fxs_bridgew', label: 'Bridge walk — 3 steps', time: '3 min', block: 'Shape', cue: 'Strong arms' },
-      { id: 'fxs_hs', label: 'Handstand hold 3–5 sec on line', time: '5 min', block: 'Shape', cue: 'L2 requirement' },
-      { id: 'fxs_hswall', label: 'Wall handstand — belly or back to wall', time: '5 min', block: 'Shape', cue: 'Alignment' },
-      { id: 'fxs_hswalk', label: 'Handstand walk on line (short)', time: '5 min', block: 'Shape', cue: 'Advanced' },
-      { id: 'fxs_frontlim', label: 'Front limber (stand → HS → stand)', time: '5 min', block: 'Shape', cue: 'Through bridge' },
-      { id: 'fxs_scale', label: 'Scale hold — 5 sec each leg', time: '3 min', block: 'Shape', cue: 'Beam + floor' },
-      { id: 'fxs_candle', label: 'Candlestick → stand', time: '3 min', block: 'Shape', cue: 'Tight tuck' },
-      { id: 'fxs_hollow', label: 'Hollow → arch rocks x10', time: '3 min', block: 'Shape', cue: 'Core' },
-      { id: 'fxs_pike', label: 'Pike stand / pike hold on floor', time: '3 min', block: 'Shape', cue: 'Hamstring flexibility' },
-      { id: 'fxs_seat', label: 'Seat drop to bridge (trampoline prep)', time: '5 min', block: 'Shape', cue: 'On tramp if available' },
-      { id: 'fxs_incline', label: 'Bridge on incline mat — kickover prep', time: '5 min', block: 'Shape', cue: 'Gravity assist' },
-      { id: 'fxs_panelhs', label: 'Handstand on panel mat stack', time: '5 min', block: 'Shape', cue: 'Step down from block HS' },
-      { id: 'ft_pressstrad', label: 'Press to straddle stand', time: '5 min', block: 'Strength', cue: 'Testing / floor' },
-      { id: 'ft_stradfroll', label: 'Straddle forward roll x2 IAR', time: '5 min', block: 'Tumbling', cue: 'Legs straight' },
-      { id: 'ft_kicklimber', label: 'Kick to handstand → limber hold 3 sec (no head on FX)', time: '5 min', block: 'Shape', cue: 'Universal name: limber' },
-      { id: 'ft_cwpushblock', label: 'Cartwheel drill — push over block, step in (arms by ears)', time: '5 min', block: 'Tumbling', cue: 'Testing standard' },
-      { id: 'ft_hsrollcheese', label: 'Handstand forward roll down cheese mat', time: '5 min', block: 'Tumbling', cue: 'Controlled roll' },
-      { id: 'ft_kickhs', label: 'Kick to handstand — feet side by side', time: '5 min', block: 'Shape', cue: 'Lunge entry' },
-      { id: 'ft_candle5', label: 'Candlestick hold 5 sec — arms down', time: '3 min', block: 'Shape', cue: 'Testing' },
-      { id: 'ft_hswalk', label: 'Handstand hold with walking — 10 sec', time: '5 min', block: 'Shape', cue: 'Testing / floor' },
-    ]
-  },
-  floor_tumbling: {
-    title: 'Floor — tumbling & power',
-    xxl: true,
-    items: [
-      { id: 'fxt_froll', label: 'Forward roll — tuck and pike', time: '5 min', block: 'L1' },
-      { id: 'fxt_broll', label: 'Backward roll — tuck', time: '5 min', block: 'L1' },
-      { id: 'fxt_brollpu', label: 'Backward roll to push-up', time: '5 min', block: 'L2' },
-      { id: 'fxt_cwblk', label: 'Cartwheel — hand on block', time: '5 min', block: 'L1' },
-      { id: 'fxt_cw', label: 'Cartwheel both sides on line', time: '5 min', block: 'L2' },
-      { id: 'fxt_cwround', label: 'Cartwheel → round-off connection prep', time: '5 min', block: 'L3' },
-      { id: 'fxt_roprep', label: 'Round-off prep — 180° turn to HS', time: '5 min', block: 'L2' },
-      { id: 'fxt_ro', label: 'Round-off on line', time: '6 min', block: 'L3' },
-      { id: 'fxt_rebound', label: 'Round-off → rebound (stick or jump)', time: '6 min', block: 'L3' },
-      { id: 'fxt_bhs', label: 'Back handspring — trampoline', time: '6 min', block: 'L3' },
-      { id: 'fxt_bhsroll', label: 'Back handspring — roller / cheese', time: '6 min', block: 'L3' },
-      { id: 'fxt_bhsfloor', label: 'Back handspring on floor (spot)', time: '6 min', block: 'L4' },
-      { id: 'fxt_robhs', label: 'Round-off + back handspring', time: '8 min', block: 'L4' },
-      { id: 'fxt_bwo', label: 'Back walkover on line', time: '5 min', block: 'L3' },
-      { id: 'fxt_fwo', label: 'Front walkover on line', time: '5 min', block: 'L3+' },
-      { id: 'fxt_fhs', label: 'Front handspring prep', time: '5 min', block: 'L3+' },
-      { id: 'fxt_aerial', label: 'Aerial cartwheel prep (floor line)', time: '5 min', block: 'L5+' },
-      { id: 'fxt_btuck', label: 'Back tuck progression — pit / tramp', time: '8 min', block: 'L5' },
-      { id: 'fxt_layout', label: 'Layout step-out prep', time: '6 min', block: 'L5' },
-      { id: 'fxt_punch', label: 'Punch front prep — to resi', time: '5 min', block: 'L5' },
-      { id: 'fxt_whip', label: 'Whip back to hollow (advanced)', time: '5 min', block: 'L5+' },
-    ]
-  },
-  floor_dance: {
-    title: 'Floor — dance, jumps & routine',
-    xxl: true,
-    items: [
-      { id: 'fxd_chasse', label: 'Chassé across floor', time: '4 min', block: 'Dance' },
-      { id: 'fxd_passé', label: 'Passé turn — 3 each way', time: '4 min', block: 'Dance' },
-      { id: 'fxd_crown', label: 'Crown arms + body wave', time: '4 min', block: 'Dance' },
-      { id: 'fxd_leap', label: 'Split leap on floor line', time: '5 min', block: 'Dance' },
-      { id: 'fxd_leap120', label: 'Split leap 120°', time: '5 min', block: 'L3' },
-      { id: 'fxd_leap150', label: 'Split leap 150°', time: '5 min', block: 'L5' },
-      { id: 'fxd_cat', label: 'Cat leap / stag jump', time: '4 min', block: 'Dance' },
-      { id: 'fxd_tuck', label: 'Tuck jump', time: '4 min', block: 'Jumps' },
-      { id: 'fxd_straddle', label: 'Straddle jump / wolf jump', time: '4 min', block: 'Jumps' },
-      { id: 'fxd_half', label: '½ turn in passé', time: '4 min', block: 'Turns' },
-      { id: 'fxd_full', label: 'Full turn on line', time: '4 min', block: 'Turns' },
-      { id: 'fxd_double', label: 'Double turn prep (L5)', time: '4 min', block: 'Turns' },
-      { id: 'fxd_combo', label: 'Dance combo — chassé leap turn', time: '6 min', block: 'Routine' },
-      { id: 'fxd_half_r', label: '½ routine with music', time: '8 min', block: 'Routine' },
-      { id: 'fxd_full_r', label: 'Full routine with music x2', time: '10 min', block: 'Routine' },
-      { id: 'fxd_present', label: 'Presentation — salute, pose, stick', time: '3 min', block: 'Routine' },
-      { id: 'ft_leap100', label: 'Leap 100° x3 IAR', time: '5 min', block: 'Dance', cue: 'Testing standard' },
-      { id: 'ft_splitjump100', label: 'Split jump 100° x3 IAR', time: '5 min', block: 'Jumps', cue: 'Testing standard' },
-      { id: 'ft_snaplock', label: 'Snap turn to relevé lock x3 IAR', time: '5 min', block: 'Turns', cue: 'Testing / floor' },
-    ]
-  },
-  tramp: {
-    title: 'Tramp & TumblTrak — universal drills',
-    xl: true,
-    items: [
-      { id: 'tr_rsplit', label: 'Right split jump 100°', equip: 'Tramp', cue: 'Testing /4' },
-      { id: 'tr_lsplit', label: 'Left split jump 100°', equip: 'Tramp', cue: 'Testing' },
-      { id: 'tr_straddle', label: 'Straddle jump 100°', equip: 'Tramp', cue: 'Testing' },
-      { id: 'tr_knee', label: 'Knee drop — stand up', equip: 'Tramp', cue: 'Control' },
-      { id: 'tr_table', label: 'Table drop (back drop)', equip: 'Tramp', cue: 'Tight core' },
-      { id: 'tr_ro8', label: 'Round-off rebound onto 2 x 8" mats', equip: 'Tramp + mats', cue: 'Testing' },
-      { id: 'tt_rlm', label: 'R / L / M 100° jumps connected', equip: 'TumblTrak', cue: 'Testing /2' },
-      { id: 'tt_ro', label: 'Power hurdle — round-off rebound', equip: 'TumblTrak', cue: 'Testing' },
-      { id: 'tr_seat', label: 'Seat drop — stand up series', equip: 'Tramp', cue: 'Progression' },
-      { id: 'tr_bhs', label: 'Back handspring on tramp', equip: 'Tramp', cue: 'Spot as needed' },
-      { id: 'tr_front', label: 'Front tuck / front salto prep', equip: 'Tramp', cue: 'Advanced' },
-    ]
-  },
-  testing_battery: {
-    title: 'Testing battery — your gym standard (/61)',
-    full: true,
-    xxl: true,
-    items: [
-      { id: 'tb_rope', label: 'Strength · ½ rope climb', cue: '/15 strength' },
-      { id: 'tb_leglift', label: 'Strength · 4 L leg lifts', cue: '/15' },
-      { id: 'tb_straddle', label: 'Strength · 5s straddle hold', cue: '/15' },
-      { id: 'tb_chin5', label: 'Strength · 5 chin-ups', cue: '/15' },
-      { id: 'tb_chin10', label: 'Strength · 10s chin-up hold', cue: '/15' },
-      { id: 'tb_vup', label: 'Strength · 15 V-ups', cue: '/15' },
-      { id: 'tb_hollow', label: 'Strength · 15 hollow rocks', cue: '/15' },
-      { id: 'tb_whs', label: 'Strength · 30s wall handstand', cue: '/15' },
-      { id: 'tb_lhold', label: 'Strength · 10s L-hold in support', cue: '/15' },
-      { id: 'tb_candle', label: 'Strength · 5s candle hold', cue: '/15' },
-      { id: 'tb_dips', label: 'Strength · 5 dips', cue: '/15' },
-      { id: 'tb_skin', label: 'Strength · 2 skin the cat through pike', cue: '/15' },
-      { id: 'tb_squat', label: 'Strength · 10 squat jumps', cue: '/15' },
-      { id: 'tb_punch', label: 'Strength · 20 punch jumps on panels IAR', cue: '/15' },
-      { id: 'tb_cardio', label: 'Strength · 5 min cardio run', cue: '/15' },
-      { id: 'tb_vhs', label: 'Vault · HS block on floor', cue: '/5 vault' },
-      { id: 'tb_vwhale', label: 'Vault · 7/9/11 run punch jump on whale', cue: '/5' },
-      { id: 'tb_vhs8', label: 'Vault · jump to HS on 2–3 x 8" mats', cue: '/5' },
-      { id: 'tb_vhsleg', label: 'Vault · jump to HS bad leg / hurdle foot', cue: '/5' },
-      { id: 'tb_vrun', label: 'Vault · run timed 4.5s', cue: '/5' },
-      { id: 'tb_bblock', label: 'Bars · block off LB to board', cue: '/7 bars' },
-      { id: 'tb_bglide', label: 'Bars · 3 glide swings IAR', cue: '/7' },
-      { id: 'tb_bcast', label: 'Bars · 3 casts 45–90° hollow shape', cue: '/7' },
-      { id: 'tb_bslide', label: 'Bars · body slide to knees x3, hold 3s', cue: '/7' },
-      { id: 'tb_bpull', label: 'Bars · pullover straight legs, feet together', cue: '/7' },
-      { id: 'tb_bbhc', label: 'Bars · 45° cast back hip circle', cue: '/7' },
-      { id: 'tb_bcandle', label: 'Bars · candle shootout from support', cue: '/7' },
-      { id: 'tb_bmbridge', label: 'Beam · 5s bridge hold low beam', cue: '/12 beam' },
-      { id: 'tb_bmpike', label: 'Beam · 15s pike S/R/L', cue: '/12' },
-      { id: 'tb_bmsplit', label: 'Beam · 15s split R/L/M with hands', cue: '/12' },
-      { id: 'tb_bmsee', label: 'Beam · 3 see-saw IAR low beam', cue: '/12' },
-      { id: 'tb_bmside', label: 'Beam · 10s side HS on pbar block', cue: '/12' },
-      { id: 'tb_bmvsit', label: 'Beam · V-sit 3s, good leg, squat tuck', cue: '/12' },
-      { id: 'tb_bmstrad', label: 'Beam · 5s straddle hold', cue: '/12' },
-      { id: 'tb_bmplie', label: 'Beam · plie → 10s relevé hold', cue: '/12' },
-      { id: 'tb_bmrel', label: 'Beam · R&L 10s relevé hold', cue: '/12' },
-      { id: 'tb_bmkick', label: 'Beam · kick front/back plie relevé 2s', cue: '/12' },
-      { id: 'tb_bmpivot', label: 'Beam · 2 pivot-pivot turns medium beam', cue: '/12' },
-      { id: 'tb_bmjump', label: 'Beam · 2 straight jump IAR medium beam', cue: '/12' },
-      { id: 'tb_fhswalk', label: 'Floor · 10s HS hold with walking', cue: '/16 floor' },
-      { id: 'tb_fbridge', label: 'Floor · 15s bridge at wall', cue: '/16' },
-      { id: 'tb_fsplit', label: 'Floor · 15s R&L split no hands', cue: '/16' },
-      { id: 'tb_fstrad', label: 'Floor · 15s straddle chest down', cue: '/16' },
-      { id: 'tb_fpress', label: 'Floor · press to straddle stand', cue: '/16' },
-      { id: 'tb_ffroll', label: 'Floor · 2 straddle forward rolls IAR', cue: '/16' },
-      { id: 'tb_fkick', label: 'Floor · bridge kickover down cheese straight legs', cue: '/16' },
-      { id: 'tb_flimber', label: 'Floor · kick HS to limber hold 3s', cue: '/16' },
-      { id: 'tb_fcw', label: 'Floor · CW push over block step in', cue: '/16' },
-      { id: 'tb_fhsroll', label: 'Floor · HS forward roll down cheese', cue: '/16' },
-      { id: 'tb_fbroll', label: 'Floor · backward roll to push-up', cue: '/16' },
-      { id: 'tb_fkickhs', label: 'Floor · kick to HS feet together', cue: '/16' },
-      { id: 'tb_fcandle', label: 'Floor · candlestick 5s arms down', cue: '/16' },
-      { id: 'tb_fleap', label: 'Floor · 3 leaps 100° IAR', cue: '/16' },
-      { id: 'tb_fjump', label: 'Floor · 3 split jumps 100° IAR', cue: '/16' },
-      { id: 'tb_fsnap', label: 'Floor · 3 snap turn to relevé lock IAR', cue: '/16' },
-      { id: 'tb_tr_rl', label: 'Tramp · R/L 100° split jumps', cue: '/4 tramp' },
-      { id: 'tb_tr_strad', label: 'Tramp · 100° straddle jump', cue: '/4' },
-      { id: 'tb_tr_knee', label: 'Tramp · knee drop + table drop', cue: '/4' },
-      { id: 'tb_tr_ro', label: 'Tramp · RO rebound on 2 x 8" mats', cue: '/4' },
-      { id: 'tb_tt', label: 'TumblTrak · R/L/M 100° connected + power hurdle RO', cue: '/2' },
-    ]
-  },
-  queue: {
-    title: 'Active queue drills (while waiting)',
-    tall: true,
-    items: [
-      { id: 'q_hollow', label: 'Hollow hold' },
-      { id: 'q_arch', label: 'Arch hold' },
-      { id: 'q_releve', label: 'Relevé walks' },
-      { id: 'q_chasse', label: 'Chassé on floor line' },
-      { id: 'q_hang', label: 'Hang hold 10 sec' },
-      { id: 'q_chin', label: 'Chin hold assisted' },
-      { id: 'q_cast', label: 'Cast shape on floor' },
-      { id: 'q_glide', label: 'Glide swing low bar' },
-      { id: 'q_stick', label: 'Stick jumps in place' },
-      { id: 'q_passé', label: 'Passé balance' },
-      { id: 'q_whs', label: 'Wall handstand hold' },
-      { id: 'q_leglift', label: 'Leg lifts on low bar' },
-      { id: 'q_stem', label: 'Stem rise drill' },
-      { id: 'q_hurdle', label: 'Hurdle shape on line' },
-      { id: 'q_bridge', label: 'Bridge hold' },
-      { id: 'q_turn', label: 'Full turn in place' },
-      { id: 'q_releve5', label: 'Relevé hold — 5 sec' },
-      { id: 'q_squatwalk', label: 'Squat walk on floor line' },
-      { id: 'q_pikewalk', label: 'Pike walk on floor line' },
-      { id: 'q_kipshape', label: 'Kip shape on floor (2 panels)' },
-      { id: 'q_limber', label: 'Bridge hold / limber shape' },
-    ]
-  },
-  close: {
-    title: 'Close activities',
-    items: [
-      { id: 'cl_stretch', label: '2 stretches — athlete or coach choice (20 sec)' },
-      { id: 'cl_recap', label: 'Brief recap — one improvement per athlete' },
-      { id: 'cl_eval', label: 'Record evaluation progress (3 of 4 points)' },
-      { id: 'cl_tomorrow', label: 'Announce tomorrow event focus' },
-      { id: 'cl_circle', label: 'Circle — each athlete shares one win' },
-      { id: 'cl_video', label: 'Review 1 video rep (vault or floor)' },
-      { id: 'cl_goals', label: 'Set individual goal for next class' },
-    ]
-  }
-};
-
-const BARS_CATS = ['bars_cast','bars_kip_floor','bars_kip','bars_skills'];
-const BEAM_CATS = ['beam_feet','beam_skills','beam_acro'];
-const FLOOR_CATS = ['floor_shapes','floor_tumbling','floor_dance'];
-
-function getCheckedMulti(cats) {
-  return cats.flatMap(c => getChecked(c));
-}
-
-const DAY_PRESETS = {
-  mon: {
-    checks: ['b_vault','ln_a','ln_e','v_run','v_jump','v_full','c_hollow','wu_run','wu_hs'],
-  },
-  tue: {
-    checks: ['b_bars','ln_f','bkf_2panel','bkf_pike2','bkf_angle','bk_glide5','bc_horiz','bs_pull','c_leglift'],
-  },
-  wed: {
-    checks: ['b_beam','ln_d','bbf_releve5','bbf_squatwalk','bbf_pikewalk','bbs_snap','bbs_lever','bbs_straight'],
-  },
-  thu: {
-    checks: ['b_floor','ln_c','fxs_limber','fxs_hsblk','fxs_kick','fxs_bridge','fxt_cw','fxt_brollpu'],
-  },
-  fri: {
-    checks: ['b_vault','b_bars','b_beam','b_floor','bs_routine','fxd_half_r','v_pres','bk_kipcast'],
-  },
-  test: { checks: [] }
-};
-
-function allBarsChecked() {
-  return getCheckedMulti(BARS_CATS);
-}
-
-function renderSelectors() {
-  for (const cat of Object.values(CATEGORIES)) {
-    cat.items = cat.items.filter(i => !String(i.id).startsWith('custom_'));
-  }
-  mergeCustomIntoCategories();
-  populateCustomCatSelect();
-
-  const grid = document.getElementById('selector-grid');
-  grid.innerHTML = '';
-  for (const [key, cat] of Object.entries(CATEGORIES)) {
-    const fs = document.createElement('fieldset');
-    fs.className = 'panel' + (cat.wide ? ' wide' : '') + (cat.full ? ' full' : '');
-    fs.dataset.category = key;
-    const legend = document.createElement('legend');
-    legend.textContent = cat.title;
-    fs.appendChild(legend);
-
-    const list = document.createElement('div');
-    list.className = 'check-list' + (cat.xxl ? ' xxl' : cat.xl ? ' xl' : cat.tall ? ' tall' : '');
-    cat.items.forEach(item => {
-      const lbl = document.createElement('label');
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.name = key;
-      cb.value = item.id;
-      cb.dataset.category = key;
-      if (cat.defaultAll) cb.checked = true;
-      lbl.appendChild(cb);
-      const txt = document.createTextNode(item.label);
-      lbl.appendChild(txt);
-      if (item.custom) {
-        const tag = document.createElement('span');
-        tag.className = 'custom-tag';
-        tag.textContent = 'custom';
-        lbl.appendChild(tag);
-        const del = document.createElement('button');
-        del.type = 'button';
-        del.className = 'danger';
-        del.textContent = '×';
-        del.style.cssText = 'margin-left:auto;border:none;background:none;cursor:pointer;font-size:14px;padding:0 4px;';
-        del.onclick = (e) => { e.preventDefault(); removeCustomDrill(item.id); };
-        lbl.appendChild(del);
-      }
-      list.appendChild(lbl);
-    });
-    fs.appendChild(list);
-
-    const actions = document.createElement('div');
-    actions.className = 'panel-actions';
-    const btnAll = document.createElement('button');
-    btnAll.type = 'button';
-    btnAll.textContent = 'All';
-    btnAll.onclick = () => setCategoryChecks(key, true);
-    const btnNone = document.createElement('button');
-    btnNone.type = 'button';
-    btnNone.textContent = 'None';
-    btnNone.onclick = () => setCategoryChecks(key, false);
-    actions.appendChild(btnAll);
-    actions.appendChild(btnNone);
-    fs.appendChild(actions);
-
-    grid.appendChild(fs);
-  }
-}
-
-function setCategoryChecks(cat, checked) {
-  document.querySelectorAll(`input[data-category="${cat}"]`).forEach(cb => cb.checked = checked);
-}
-
-function getChecked(cat) {
-  return [...document.querySelectorAll(`input[data-category="${cat}"]:checked`)].map(cb => cb.value);
-}
-
-function getItem(cat, id) {
-  return CATEGORIES[cat].items.find(i => i.id === id);
-}
-
-function esc(s) {
-  if (!s) return '';
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-function buildPlan() {
-  const club = document.getElementById('club').value || '_______________';
-  const coach = document.getElementById('coach').value || '_______________';
-  const dateEl = document.getElementById('date');
-  const date = dateEl.value
-    ? new Date(dateEl.value + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
-    : '_______________';
-
-  const blocks = getChecked('blocks');
-  const warmup = getChecked('warmup');
-  const movement = getChecked('movement');
-  const conditioning = getChecked('conditioning');
-  const flex = getChecked('flex');
-  const lines = getChecked('lines');
-  const vault = getChecked('vault');
-  const barsCast = getChecked('bars_cast');
-  const barsKipFloor = getChecked('bars_kip_floor');
-  const barsKip = getChecked('bars_kip');
-  const barsSkills = getChecked('bars_skills');
-  const barsAll = getCheckedMulti(BARS_CATS);
-  const beamAll = getCheckedMulti(BEAM_CATS);
-  const floorAll = getCheckedMulti(FLOOR_CATS);
-  const tramp = getChecked('tramp');
-  const testing = getChecked('testing_battery');
-  const queue = getChecked('queue');
-  const close = getChecked('close');
-
-  let html = '';
-
-  // PAGE 1
-  html += `<div class="page">
-    <header>
-      <h1>Coach Rosetta Stone — Class Plan</h1>
-      <div class="meta">
-        <span>USA Gymnastics Development Program</span>
-        <span>Club: ${esc(club)}</span>
-        <span>Date: ${esc(date)}</span>
-        <span>Coach: ${esc(coach)}</span>
-      </div>
-    </header>
-    <div class="note"><strong>Selected blocks:</strong> ${blocks.length ? blocks.map(id => esc(getItem('blocks', id)?.block)).join(' · ') : 'None selected'}</div>
-
-    <h2>Class timeline</h2>
-    <table><tr><th>Time</th><th>Block</th><th>Selected content</th></tr>`;
-  if (blocks.length) {
-    blocks.forEach(id => {
-      const b = getItem('blocks', id);
-      let content = '—';
-      if (id === 'b_act') content = warmup.length ? warmup.map(i => getItem('warmup', i)?.label.split('—')[0].trim()).join('; ') : 'Universal warm-up';
-      else if (id === 'b_mov') content = movement.length ? movement.map(i => getItem('movement', i)?.label).join(' → ') : 'Sequence A';
-      else if (id === 'b_cond') content = conditioning.length ? conditioning.map(i => getItem('conditioning', i)?.label).join('; ') : '—';
-      else if (id === 'b_flex') content = flex.length ? flex.map(i => getItem('flex', i)?.label).join('; ') : '—';
-      else if (id === 'b_line') content = lines.length ? lines.map(i => getItem('lines', i)?.label.split(':')[0]).join('; ') : '—';
-      else if (id === 'b_vault') content = vault.length ? vault.map(i => getItem('vault', i)?.label).join('; ') : '—';
-      else if (id === 'b_bars') content = barsAll.length ? barsAll.map(i => {
-        const item = getItemAny(i);
-        return item?.label?.split('—').pop()?.trim() || item?.label;
-      }).join('; ') : '—';
-      else if (id === 'b_beam') content = beamAll.length ? beamAll.map(i => getItemAny(i)?.label).join('; ') : '—';
-      else if (id === 'b_floor') content = floorAll.length ? floorAll.map(i => getItemAny(i)?.label).join('; ') : '—';
-      else if (id === 'b_close') content = close.length ? close.map(i => getItem('close', i)?.label).join('; ') : 'Stretch and recap';
-      html += `<tr><td>${esc(b.time)}</td><td>${esc(b.block)}</td><td>${esc(content)}</td></tr>`;
-    });
-  } else {
-    html += `<tr><td colspan="3" class="empty">No blocks selected</td></tr>`;
-  }
-  html += `</table>`;
-
-  if (warmup.length) {
-    html += `<h2>Universal warm-up</h2><table><tr><th>Drill</th><th>Coach cue</th></tr>`;
-    warmup.forEach(id => {
-      const w = getItem('warmup', id);
-      html += `<tr><td>${esc(w.label.split('—')[0])}</td><td>${esc(w.cue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  if (movement.length) {
-    html += `<h2>Movement line</h2><pre class="seq">${movement.map((id, n) => (n+1) + '. ' + getItem('movement', id).label).join('\n')}</pre>`;
-  }
-
-  if (conditioning.length) {
-    html += `<h2>Conditioning</h2><table><tr><th>Exercise</th><th>Cue</th></tr>`;
-    conditioning.forEach(id => {
-      const c = getItem('conditioning', id);
-      html += `<tr><td>${esc(c.label)}</td><td>${esc(c.cue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  html += `<div class="footer"><span>Page 1</span><span>Libro del Coach · USAG Development Program</span></div></div>`;
-
-  // PAGE 2
-  html += `<div class="page"><header><h1>Flexibility, lines, queue</h1><div class="meta"><span>Generated plan · Full drill bank L1–L5</span></div></header>`;
-
-  if (flex.length) {
-    html += `<h2>Flexibility</h2><table><tr><th>Stretch</th><th>Cue / target</th></tr>`;
-    flex.forEach(id => {
-      const f = getItem('flex', id);
-      html += `<tr><td>${esc(f.label)}</td><td>${esc(f.cue || f.target || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  if (lines.length) {
-    html += `<h2>Across-floor lines</h2><table><tr><th>Line</th><th>Skills</th><th>When</th></tr>`;
-    lines.forEach(id => {
-      const l = getItem('lines', id);
-      const parts = l.label.split(': ');
-      html += `<tr><td>${esc(parts[0])}</td><td>${esc(parts[1] || l.label)}</td><td>${esc(l.when || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  if (queue.length) {
-    html += `<h2>Active queue (assign to stations)</h2><table><tr><th>Drill</th></tr>`;
-    queue.forEach(id => html += `<tr><td>${esc(getItem('queue', id).label)}</td></tr>`);
-    html += `</table>`;
-  }
-
-  html += `<h2>Station overview — reference</h2>
-    <table><tr><th>Event</th><th>St. A</th><th>St. B</th><th>St. C</th><th>Queue</th></tr>
-    <tr><td>Vault L2</td><td>Run x4</td><td>Jump to HS 16"</td><td>Full vault</td><td>HS wall</td></tr>
-    <tr><td>Vault L3–L4</td><td>Sprint + hurdle</td><td>HS flatback</td><td>Handspring</td><td>Stick jumps</td></tr>
-    <tr><td>Bars L2</td><td>Pullover</td><td>Cast horizontal (0°)</td><td>BHC</td><td>Glide</td></tr>
-    <tr><td>Bars L4</td><td>Glide x5</td><td>Kip factory</td><td>Cast + routine</td><td>Hollow</td></tr>
-    <tr><td>Beam L2–L3</td><td>Relevé / lever</td><td>Stretch jump</td><td>Cartwheel</td><td>Passé</td></tr>
-    <tr><td>Floor L2</td><td>HS 3"</td><td>Bridge</td><td>Back roll push-up</td><td>Chassé</td></tr>
-    <tr><td>Floor L4</td><td>RO rebound</td><td>BHS tramp</td><td>RO + BHS</td><td>Full turn</td></tr>
-    </table>`;
-
-  html += `<div class="footer"><span>Page 2</span><span>Libro del Coach · USAG Development Program</span></div></div>`;
-
-  // PAGE 3 — Vault + Bars detail
-  html += `<div class="page"><header><h1>Vault &amp; Bars detail</h1></div>`;
-
-  if (vault.length) {
-    html += `<h2>Vault</h2><table><tr><th>Activity</th><th>Equipment</th><th>Spotting</th></tr>`;
-    vault.forEach(id => {
-      const v = getItem('vault', id);
-      html += `<tr><td>${esc(v.label)}</td><td>${esc(v.equip || '')}</td><td>${esc(v.spot || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  if (barsCast.length) {
-    html += `<div class="note"><strong>Cast angle reference:</strong> −45° (below horizontal) → 0° horizontal (L2 requirement) → +45° above horizontal → +70° near vertical → 90° handstand (L4–L5 goal)</div>`;
-    html += `<h2>Bars — Cast progression (angles)</h2><table><tr><th>Drill</th><th>Angle / level</th><th>Spot</th><th>Coach cue</th></tr>`;
-    barsCast.forEach(id => {
-      const b = getItem('bars_cast', id);
-      html += `<tr><td>${esc(b.label)}</td><td><strong>${esc(b.angle || '')}</strong></td><td>${esc(b.spot || '')}</td><td>${esc(b.cue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  if (barsKipFloor.length) {
-    html += `<h2>Bars — Kip floor drills (mats &amp; panels)</h2><table><tr><th>Drill</th><th>Equipment</th><th>Coach cue</th></tr>`;
-    barsKipFloor.forEach(id => {
-      const b = getItem('bars_kip_floor', id);
-      html += `<tr><td>${esc(b.label)}</td><td>${esc(b.equip || '')}</td><td>${esc(b.cue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  if (barsKip.length) {
-    html += `<h2>Bars — Kip progression</h2><table><tr><th>Drill</th><th>Phase</th><th>Spot</th><th>Cue</th></tr>`;
-    barsKip.forEach(id => {
-      const b = getItem('bars_kip', id);
-      html += `<tr><td>${esc(b.label)}</td><td>${esc(b.phase || '')}</td><td>${esc(b.spot || '')}</td><td>${esc(b.cue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  if (barsSkills.length) {
-    html += `<h2>Bars — Mounts, circles, dismounts</h2><table><tr><th>Activity</th><th>Spot</th><th>Queue</th></tr>`;
-    barsSkills.forEach(id => {
-      const b = getItem('bars_skills', id);
-      html += `<tr><td>${esc(b.label)}</td><td>${esc(b.spot || '')}</td><td>${esc(b.queue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  html += `<div class="footer"><span>Page 3</span><span>Libro del Coach · USAG Development Program</span></div></div>`;
-
-  // PAGE 4 — Beam + Floor + close
-  html += `<div class="page"><header><h1>Beam, floor &amp; close</h1></div>`;
-
-  const beamFeet = getChecked('beam_feet');
-  const beamSkills = getChecked('beam_skills');
-  const beamAcro = getChecked('beam_acro');
-  const floorShapes = getChecked('floor_shapes');
-  const floorTumbling = getChecked('floor_tumbling');
-  const floorDance = getChecked('floor_dance');
-
-  if (beamFeet.length) {
-    html += `<h2>Beam — walks &amp; footwork</h2><table><tr><th>Drill</th><th>Block</th><th>Cue</th></tr>`;
-    beamFeet.forEach(id => {
-      const b = getItem('beam_feet', id);
-      html += `<tr><td>${esc(b.label)}</td><td>${esc(b.block || '')}</td><td>${esc(b.cue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-  if (beamSkills.length) {
-    html += `<h2>Beam — jumps &amp; turns</h2><table><tr><th>Drill</th><th>Block</th><th>Cue</th></tr>`;
-    beamSkills.forEach(id => {
-      const b = getItem('beam_skills', id);
-      html += `<tr><td>${esc(b.label)}</td><td>${esc(b.block || '')}</td><td>${esc(b.cue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-  if (beamAcro.length) {
-    html += `<h2>Beam — acro &amp; dismounts</h2><table><tr><th>Drill</th><th>Block</th><th>Cue</th></tr>`;
-    beamAcro.forEach(id => {
-      const b = getItem('beam_acro', id);
-      html += `<tr><td>${esc(b.label)}</td><td>${esc(b.block || '')}</td><td>${esc(b.cue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  if (floorShapes.length) {
-    html += `<h2>Floor — shapes, bridge &amp; limber</h2><table><tr><th>Drill</th><th>Time</th><th>Cue</th></tr>`;
-    floorShapes.forEach(id => {
-      const f = getItem('floor_shapes', id);
-      html += `<tr><td>${esc(f.label)}</td><td>${esc(f.time || '')}</td><td>${esc(f.cue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-  if (floorTumbling.length) {
-    html += `<h2>Floor — tumbling</h2><table><tr><th>Drill</th><th>Time</th><th>Level</th></tr>`;
-    floorTumbling.forEach(id => {
-      const f = getItem('floor_tumbling', id);
-      html += `<tr><td>${esc(f.label)}</td><td>${esc(f.time || '')}</td><td>${esc(f.block || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-  if (floorDance.length) {
-    html += `<h2>Floor — dance &amp; routine</h2><table><tr><th>Drill</th><th>Time</th><th>Block</th></tr>`;
-    floorDance.forEach(id => {
-      const f = getItem('floor_dance', id);
-      html += `<tr><td>${esc(f.label)}</td><td>${esc(f.time || '')}</td><td>${esc(f.block || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  if (tramp.length) {
-    html += `<h2>Tramp &amp; TumblTrak</h2><table><tr><th>Drill</th><th>Equipment</th><th>Cue</th></tr>`;
-    tramp.forEach(id => {
-      const t = getItem('tramp', id);
-      html += `<tr><td>${esc(t.label)}</td><td>${esc(t.equip || '')}</td><td>${esc(t.cue || '')}</td></tr>`;
-    });
-    html += `</table>`;
-  }
-
-  if (close.length) {
-    html += `<h2>Close</h2><table><tr><th>Activity</th></tr>`;
-    close.forEach(id => html += `<tr><td>${esc(getItem('close', id).label)}</td></tr>`);
-    html += `</table>`;
-  }
-
-  html += `<h2>Coach notes</h2>
-    <table><tr><th>Date</th><th>What worked</th><th>Adjust</th><th>Athletes</th></tr>
-    <tr><td style="height:24px"></td><td></td><td></td><td></td></tr>
-    <tr><td></td><td></td><td></td><td></td></tr>
-    </table>`;
-
-  html += `<div class="footer"><span>Page 4</span><span>Based on USA Gymnastics Development Program · Libro del Coach</span></div></div>`;
-
-  if (testing.length) {
-    html += `<div class="page"><header><h1>Gym testing battery</h1>
-      <div class="meta"><span>Total /61 · V = full · \\ = partial · X = no credit</span></div></header>`;
-    html += `<div class="note"><strong>Scoring:</strong> V = 1 pt full · \\ = 0.5 pt partial · X = 0 pt · Record each athlete on test day</div>`;
-    html += `<table><tr><th>Test item</th><th>Section</th><th>Score V / \\ / X</th></tr>`;
-    testing.forEach(id => {
-      const t = getItem('testing_battery', id);
-      html += `<tr><td>${esc(t.label.replace(/^[^·]+·\s*/, ''))}</td><td>${esc(t.cue || '')}</td><td style="width:80px"></td></tr>`;
-    });
-    html += `</table><div class="footer"><span>Testing sheet</span><span>Coach Rosetta Stone</span></div></div>`;
-  }
-
-  document.getElementById('print-area').innerHTML = html;
-  document.getElementById('status').textContent = 'Plan updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-}
-
-function populateCustomCatSelect() {
-  const sel = document.getElementById('customCat');
-  if (!sel) return;
-  const skip = new Set(['blocks', 'testing_battery', 'lines']);
-  const prev = sel.value;
-  sel.innerHTML = '';
-  for (const [key, cat] of Object.entries(CATEGORIES)) {
-    if (skip.has(key)) continue;
-    const opt = document.createElement('option');
-    opt.value = key;
-    opt.textContent = cat.title;
-    sel.appendChild(opt);
-  }
-  if (prev) sel.value = prev;
-}
-
-function applyDayPreset() {
-  const day = document.getElementById('dayPreset').value;
-  if (!day || !DAY_PRESETS[day]) return;
-  document.querySelectorAll('#selector-grid input[type=checkbox]').forEach(cb => cb.checked = false);
-  if (day === 'test') {
-    document.querySelectorAll('input[data-category="testing_battery"]').forEach(cb => cb.checked = true);
-    ['b_cond','b_flex','b_vault','b_bars','b_beam','b_floor'].forEach(id => {
-      const cb = document.querySelector(`input[value="${id}"]`);
-      if (cb) cb.checked = true;
-    });
-  } else {
-    const preset = DAY_PRESETS[day];
-    preset.checks.forEach(id => {
-      const cb = document.querySelector(`input[value="${id}"]`);
-      if (cb) cb.checked = true;
-    });
-    ['b_act','b_mov','b_cond','b_flex','b_close'].forEach(id => {
-      const cb = document.querySelector(`input[value="${id}"]`);
-      if (cb) cb.checked = true;
-    });
-  }
-  buildPlan();
-}
-
-function saveSelections() {
-  const data = {
-    club: document.getElementById('club').value,
-    coach: document.getElementById('coach').value,
-    date: document.getElementById('date').value,
-    dayPreset: document.getElementById('dayPreset').value,
-    checks: {}
-  };
-  for (const key of Object.keys(CATEGORIES)) {
-    data.checks[key] = getChecked(key);
-  }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  document.getElementById('status').textContent = 'Selections saved';
-}
-
-function loadSelections() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
-  try {
-    const data = JSON.parse(raw);
-    if (data.club) document.getElementById('club').value = data.club;
-    if (data.coach) document.getElementById('coach').value = data.coach;
-    if (data.date) document.getElementById('date').value = data.date;
-    if (data.dayPreset) document.getElementById('dayPreset').value = data.dayPreset;
-    document.querySelectorAll('#selector-grid input[type=checkbox]').forEach(cb => cb.checked = false);
-    if (data.checks) {
-      for (const [cat, ids] of Object.entries(data.checks)) {
-        ids.forEach(id => {
-          const cb = document.querySelector(`input[data-category="${cat}"][value="${id}"]`);
-          if (cb) cb.checked = true;
-        });
-      }
-    }
-    document.getElementById('status').textContent = 'Loaded saved selections';
-  } catch(e) {}
-}
-
-function resetAll() {
-  if (!confirm('Clear all selections and reset to defaults?')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  document.getElementById('club').value = '';
-  document.getElementById('coach').value = '';
-  document.getElementById('date').value = '';
-  document.getElementById('dayPreset').value = '';
-  document.querySelectorAll('#selector-grid input[type=checkbox]').forEach(cb => {
-    cb.checked = cb.closest('fieldset').querySelector('legend').textContent.includes('blocks');
-  });
-  buildPlan();
-}
-
-// Init
-renderSelectors();
-loadSelections();
-if (!localStorage.getItem(STORAGE_KEY)) {
-  // sensible defaults for first visit
-  applyDayPreset();
-  document.getElementById('dayPreset').value = '';
-  ['wu_run','wu_releve','wu_skip','mv_march','mv_froll','mv_broll','c_hollow','c_candle','c_push',
-   'f_pike','f_rs','f_ls','f_shoulder','f_wrist',
-   'v_run','v_jump','v_full','bk_glide5','bs_pull','bc_horiz',
-   'bbf_releve5','bbf_squatwalk','bbs_lever','fxs_hsblk','fxs_kick','fxt_cw',
-   'q_hollow','cl_stretch','cl_recap'].forEach(id => {
-    const cb = document.querySelector(`input[value="${id}"]`);
-    if (cb) cb.checked = true;
-  });
-}
-buildPlan();
-</script>
 
 </body>
 </html>
