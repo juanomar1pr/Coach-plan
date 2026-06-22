@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alphabet Class Sheet — PDF Builder</title>
+  <style>
+    @page { size: letter; margin: 0.5in; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #111;
+      background: #e5e5e5;
+    }
+
+    .app { max-width: 1100px; margin: 0 auto; padding: 14px 16px 28px; }
+
+    .toolbar {
+      background: #1a1a1a; color: #fff;
+      padding: 12px 16px; border-radius: 8px;
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      margin-bottom: 14px; position: sticky; top: 0; z-index: 100;
+    }
+    .toolbar h1 { font-size: 16px; font-weight: 700; margin-right: 8px; }
+    .toolbar a.planner-link {
+      font-size: 11px; font-weight: 600; color: #aaa; text-decoration: none;
+      padding: 7px 12px; border-radius: 5px; background: #333;
+    }
+    .toolbar a.planner-link:hover { color: #fff; background: #444; }
+    .toolbar button {
+      padding: 8px 16px; font-weight: 600; border: none; border-radius: 5px;
+      cursor: pointer; font-size: 13px;
+    }
+    .toolbar .primary { background: #2563eb; color: #fff; }
+    .toolbar .accent { background: #7c3aed; color: #fff; }
+    .toolbar .ghost { background: #444; color: #fff; }
+    .toolbar .status { margin-left: auto; font-size: 11px; color: #86efac; }
+
+    .meta-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      background: #fff; padding: 12px; border-radius: 8px;
+      border: 1px solid #ccc; margin-bottom: 14px;
+    }
+    .meta-row label { font-size: 11px; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
+    .meta-row input, .meta-row select {
+      width: 100%; padding: 7px 9px; border: 1px solid #bbb; border-radius: 4px;
+    }
+
+    .hint {
+      background: #eff6ff; border: 1px solid #93c5fd; border-radius: 6px;
+      padding: 10px 12px; font-size: 12px; color: #1e40af; margin-bottom: 14px;
+    }
+
+    .letter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .letter-card {
+      background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      overflow: hidden;
+    }
+    .letter-card.active-pick { border-color: #2563eb; box-shadow: 0 0 0 2px #93c5fd; }
+    .letter-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; background: #f8f8f8; border-bottom: 1px solid #e5e5e5;
+    }
+    .letter-head .glyph {
+      width: 36px; height: 36px; background: #111; color: #fff;
+      font-size: 20px; font-weight: 800; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .letter-head .picked {
+      flex: 1; font-size: 12px; font-weight: 600; color: #2563eb;
+      min-height: 18px;
+    }
+    .letter-head .picked.empty { color: #999; font-weight: 400; font-style: italic; }
+
+    .ex-list { padding: 6px 8px; max-height: 140px; overflow-y: auto; }
+    .ex-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 6px; border-radius: 4px; font-size: 12px;
+    }
+    .ex-item:hover { background: #f0f4ff; }
+    .ex-item input[type=radio] { flex-shrink: 0; }
+    .ex-item label { flex: 1; cursor: pointer; }
+    .ex-item button {
+      border: none; background: none; color: #b91c1c; cursor: pointer;
+      font-size: 14px; padding: 0 4px; opacity: 0.5;
+    }
+    .ex-item button:hover { opacity: 1; }
+
+    .add-row {
+      display: flex; gap: 6px; padding: 6px 8px 8px; border-top: 1px solid #eee;
+    }
+    .add-row input {
+      flex: 1; padding: 5px 8px; border: 1px solid #bbb; border-radius: 4px; font-size: 12px;
+    }
+    .add-row button {
+      padding: 5px 10px; background: #f3f4f6; border: 1px solid #bbb;
+      border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;
+    }
+
+    .preview-label {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; margin: 12px 0 8px; color: #333;
+    }
+
+  /* ── PRINT SHEET — full page ── */
+    #print-area {
+      background: #fff; max-width: 8.5in; margin: 0 auto;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+    }
+    .sheet {
+      width: 8.5in;
+      height: 11in;
+      padding: 0.32in 0.38in 0.28in;
+      page-break-after: always;
+      font-family: Georgia, "Times New Roman", serif;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sheet:last-child { page-break-after: auto; }
+    .sheet header {
+      border-bottom: 2px solid #111;
+      padding-bottom: 5px;
+      margin-bottom: 6px;
+      flex-shrink: 0;
+    }
+    .sheet header h1 {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 14pt; font-weight: 700; line-height: 1.15;
+    }
+    .sheet header .sub {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 7.5pt; color: #444; margin-top: 2px;
+      display: flex; flex-wrap: wrap; gap: 12px;
+    }
+    .sheet header .sub .hint-line {
+      width: 100%; font-style: italic; color: #666; margin-top: 1px;
+    }
+    .sheet-body {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(13, 1fr);
+      grid-auto-flow: column;
+      gap: 0 10px;
+      border: 1px solid #bbb;
+    }
+    .sheet-body.cols-1 {
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(26, 1fr);
+      grid-auto-flow: row;
+    }
+    .alpha-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px;
+      border-bottom: 1px solid #ddd;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .sheet-body.cols-1 .alpha-cell:nth-child(odd) { background: #fafafa; }
+    .alpha-cell .glyph {
+      flex-shrink: 0;
+      width: 1.35em;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 13pt;
+      font-weight: 800;
+      text-align: center;
+      color: #111;
+    }
+    .alpha-cell .text {
+      flex: 1;
+      font-size: 8.5pt;
+      line-height: 1.2;
+      color: #222;
+    }
+    /* 2-col: alternate column stripe */
+    .sheet-body:not(.cols-1) .alpha-cell:nth-child(odd) { background: #fafafa; }
+
+    .sheet-body.cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(13, 1fr);
+      grid-auto-flow: row;
+      gap: 4px;
+      border: none;
+    }
+    .sheet-body.cards .alpha-cell {
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background: #fafafa;
+    }
+    .sheet-body.cards .glyph { font-size: 15pt; }
+
+    .sheet footer {
+      flex-shrink: 0;
+      margin-top: 5px; padding-top: 4px; border-top: 1px solid #ddd;
+      font-size: 6.5pt; color: #888;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      display: flex; justify-content: space-between;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .app { display: none !important; }
+      #print-area { box-shadow: none; max-width: none; }
+      .sheet { height: 11in; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="toolbar">
+    <a class="planner-link" href="index.html">Planner</a>
+    <h1>Alphabet Class PDF</h1>
+    <button type="button" class="accent" onclick="randomize()">Random — shuffle picks</button>
+    <button type="button" class="primary" onclick="buildSheet()">Update sheet</button>
+    <button type="button" onclick="window.print()">Print / PDF</button>
+    <button type="button" onclick="saveData()">Save</button>
+    <button type="button" class="ghost" onclick="resetDefaults()">Reset defaults</button>
+    <span class="status" id="status"></span>
+  </div>
+
+  <div class="meta-row">
+    <div><label>Club</label><input type="text" id="club" placeholder="Club name"></div>
+    <div><label>Date</label><input type="date" id="date"></div>
+    <div><label>Coach</label><input type="text" id="coach" placeholder="Coach name"></div>
+    <div>
+      <label>Sheet layout</label>
+      <select id="layout" onchange="buildSheet()">
+        <option value="2col">Full page — 2 columns (A–M / N–Z)</option>
+        <option value="1col">Full page — 1 column</option>
+        <option value="cards">Full page — large cards</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="hint">
+    Each letter has <strong>5 default exercises</strong> — add more with the + box.
+    Click a radio to pin that exercise for the letter, or hit <strong>Random</strong> to shuffle one pick per letter from its pool.
+    Then <strong>Print / PDF</strong>.
+  </div>
+
+  <div class="letter-grid" id="letter-grid"></div>
+  <p class="preview-label">Print preview</p>
+</div>
+
+<div id="print-area"></div>
+
+<script>
+const STORAGE_KEY = 'alphabet-class-pdf-v1';
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+/* Default pools — 5 per letter, gymnastics / universal names */
+const DEFAULT_POOLS = {
+  A: ['Arch hold 10 sec', 'Arm circles 10 each way', 'Arabesque walk 3 steps', 'Ankle stability balance 20 sec', 'Accelerated vault run x2'],
+  B: ['Bridge hold 10 sec', 'Backward roll tucked', 'Bear crawl 2 lengths', 'Block handstand 3 x 5 sec', 'Bars hang hold 10 sec'],
+  C: ['Cartwheel both sides', 'Candlestick to stand x5', 'Cast push-up shape x8', 'Chin hold 10 sec', 'Chassé on floor line'],
+  D: ['Dish hold 15 sec', 'Dips x5', 'Dynamic leg swings 10 each', 'Dance — crown arms x3', 'Drop to push-up shape (bars prep)'],
+  E: ['Echappé prep on line', 'Explosive squat jumps x8', 'Extension hold in bridge 5 sec', 'Entry hurdle shape x4', 'Elbow plank 20 sec'],
+  F: ['Forward roll tucked x3', 'Forearm plank 20 sec', 'Flex — forward lunge stretch 15 sec', 'Full turn on line x2', 'Front support on bars 10 sec'],
+  G: ['Glide swing x5', 'Gallop down and back', 'Glute bridge hold 10 sec', 'Good-leg passé balance 5 sec', 'Grip strength — hang 15 sec'],
+  H: ['Hollow hold 15 sec', 'Hollow rocks x10', 'Handstand at wall 15 sec', 'Heel walk 1 length', 'High skip across floor'],
+  I: ['Incline bridge kickover prep', 'Inverted hang (skin the cat prep)', 'Inside leg kick balance 3 each', 'Isometric squat hold 10 sec', 'IAR straight jumps x5'],
+  J: ['Jump series — tuck pike straddle', 'Jump to handstand on mats x2', 'Jog warm-up 1 min', 'Jackknife sit-up x8', 'Jumps on beam — straight x5'],
+  K: ['Kick to handstand shape x3', 'Knee scale hold 5 sec each', 'Kip shape on floor (2 panels)', 'Kickover from bridge x2', 'Kneeling shoulder stretch 15 sec'],
+  L: ['Leg lifts on bar x8', 'Lever hold 3 sec each leg', 'Lunge walk full floor', 'Limber — kick HS to bridge stand', 'Long hang on bars 10 sec'],
+  M: ['March skip gallop line', 'Middle split hold 15 sec', 'Mount jump to stand (beam prep)', 'Mountain climbers 30 sec', 'Modified push-up x8'],
+  N: ['Negative push-up lower 3 sec', 'Narrow beam relevé walk', 'Neck rolls gentle x4', 'Nine-step run form check', 'N-shape hollow body hold'],
+  O: ['Open shoulder cast drill at wall', 'Overhead squat with stick', 'Oversplit stretch 15 sec (advanced)', 'One-leg balance eyes closed 10 sec', 'Open-angle kip recovery drill'],
+  P: ['Pike walk on beam', 'Passé balance 5 sec each', 'Pullover on bars x3', 'Plank shoulder taps x10', 'Punch jumps on panels x10'],
+  Q: ['Quad stretch 15 sec each', 'Quick feet line taps 20 sec', 'Quarter turn on relevé x4', 'Quiet landing stick jumps x6', 'Quality cartwheel freeze 3 sec'],
+  R: ['Relevé hold 5 sec', 'Relevé walk full beam', 'Round-off prep on line', 'Right split hold 15 sec', 'Rope climb ½ or hang challenge'],
+  S: ['Snap turn on beam x3', 'Squat walk on beam', 'Skin the cat through pike x2', 'Side plank 15 sec each', 'Straddle pike stretch 15 sec'],
+  T: ['Tuck jump x5', 'Toe shoot to bar x6', 'Tap swing shape on floor x8', 'Turn full on line x2 each way', 'Tramp straight jump stick x5'],
+  U: ['Underswing shape on floor', 'Up-down planks x6', 'Under-bar leg lifts x8', 'Unilateral hop series 30 sec', 'USA run — vault sprint 3 steps x4'],
+  V: ['V-ups x12', 'Vault hurdle on line daily', 'V-sit hold 5 sec', 'Vertical jump reach x8', 'Vigorous bear crawl 2 lengths'],
+  W: ['Wall handstand 30 sec', 'Walking lunges 2 x floor', 'Wolf jump x4', 'Wrist rocks + extension 20 sec', 'Wide straddle hold 10 sec'],
+  X: ['X-jump (star jump) x8', 'Cross punch jumps x10', 'eXplosive block HS shape x3', 'eXtension glide hold 5 sec', 'eXtra arch hold 10 sec'],
+  Y: ['Y-scale hold 5 sec each leg', 'Yoga push-up (dive bomber) x5', 'Yielding lunge stretch 15 sec', 'Young-athlete stick game x5', 'Yellow-line footwork drill 30 sec'],
+  Z: ['Zip-line hollow body slide', 'Zero-gravity tuck jump x6', 'Zigzag cone run x2', 'Zen balance — relevé lock 10 sec', 'Zoom run + stick on line x3'],
+};
+
+let state = { pools: {}, picks: {} };
+
+function initState() {
+  LETTERS.forEach(L => {
+    state.pools[L] = [...(DEFAULT_POOLS[L] || ['Exercise 1', 'Exercise 2', 'Exercise 3', 'Exercise 4', 'Exercise 5'])];
+    state.picks[L] = null;
+  });
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.pools) {
+      LETTERS.forEach(L => {
+        if (data.pools[L]?.length) state.pools[L] = data.pools[L];
+      });
+    }
+    if (data.picks) state.picks = { ...state.picks, ...data.picks };
+    if (data.club) document.getElementById('club').value = data.club;
+    if (data.coach) document.getElementById('coach').value = data.coach;
+    if (data.date) document.getElementById('date').value = data.date;
+    if (data.layout) document.getElementById('layout').value = data.layout;
+  } catch (e) {}
+}
+
+function saveData() {
+  const data = {
+    pools: state.pools,
+    picks: state.picks,
+    club: document.getElementById('club').value,
+    coach: document.getElementById('coach').value,
+    date: document.getElementById('date').value,
+    layout: document.getElementById('layout').value,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  document.getElementById('status').textContent = 'Saved';
+}
+
+function resetDefaults() {
+  if (!confirm('Reset all letter pools to defaults? Your custom exercises will be lost.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = { pools: {}, picks: {} };
+  initState();
+  renderEditor();
+  buildSheet();
+  document.getElementById('status').textContent = 'Reset to defaults';
+}
+
+function randomize() {
+  LETTERS.forEach(L => {
+    const pool = state.pools[L];
+    if (!pool.length) return;
+    state.picks[L] = pool[Math.floor(Math.random() * pool.length)];
+  });
+  renderEditor();
+  buildSheet();
+  document.getElementById('status').textContent = 'Shuffled — ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function setPick(letter, index) {
+  state.picks[letter] = state.pools[letter][index];
+  renderEditor();
+  buildSheet();
+}
+
+function addExercise(letter, input) {
+  const val = input.value.trim();
+  if (!val) return;
+  state.pools[letter].push(val);
+  input.value = '';
+  renderEditor();
+  saveData();
+}
+
+function removeExercise(letter, index) {
+  if (state.pools[letter].length <= 1) return;
+  const removed = state.pools[letter][index];
+  state.pools[letter].splice(index, 1);
+  if (state.picks[letter] === removed) state.picks[letter] = null;
+  renderEditor();
+  buildSheet();
+}
+
+function renderEditor() {
+  const grid = document.getElementById('letter-grid');
+  grid.innerHTML = '';
+  LETTERS.forEach(L => {
+    const card = document.createElement('div');
+    card.className = 'letter-card' + (state.picks[L] ? ' active-pick' : '');
+    const head = document.createElement('div');
+    head.className = 'letter-head';
+    head.innerHTML = `<div class="glyph">${L}</div>
+      <div class="picked ${state.picks[L] ? '' : 'empty'}">${state.picks[L] || 'No pick — random or select'}</div>`;
+    card.appendChild(head);
+
+    const list = document.createElement('div');
+    list.className = 'ex-list';
+    state.pools[L].forEach((ex, i) => {
+      const row = document.createElement('div');
+      row.className = 'ex-item';
+      const id = `pick_${L}_${i}`;
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = `letter_${L}`;
+      radio.id = id;
+      radio.checked = state.picks[L] === ex;
+      radio.onchange = () => setPick(L, i);
+      const lbl = document.createElement('label');
+      lbl.htmlFor = id;
+      lbl.textContent = ex;
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.textContent = '×';
+      del.title = 'Remove';
+      del.onclick = () => removeExercise(L, i);
+      row.appendChild(radio);
+      row.appendChild(lbl);
+      row.appendChild(del);
+      list.appendChild(row);
+    });
+    card.appendChild(list);
+
+    const addRow = document.createElement('div');
+    addRow.className = 'add-row';
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.placeholder = 'Add exercise for ' + L + '…';
+    inp.onkeydown = e => { if (e.key === 'Enter') addExercise(L, inp); };
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = '+ Add';
+    btn.onclick = () => addExercise(L, inp);
+    addRow.appendChild(inp);
+    addRow.appendChild(btn);
+    card.appendChild(addRow);
+
+    grid.appendChild(card);
+  });
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function buildSheet() {
+  const club = document.getElementById('club').value || '_______________';
+  const coach = document.getElementById('coach').value || '_______________';
+  const dateEl = document.getElementById('date');
+  const date = dateEl.value
+    ? new Date(dateEl.value + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    : '_______________';
+  const layout = document.getElementById('layout').value;
+
+  let bodyClass = 'sheet-body';
+  if (layout === '1col') bodyClass += ' cols-1';
+  if (layout === 'cards') bodyClass += ' cards';
+
+  let cells = '';
+  LETTERS.forEach(L => {
+    const ex = state.picks[L] || '— assign with Random';
+    cells += `<div class="alpha-cell"><span class="glyph">${L}</span><span class="text">${esc(ex)}</span></div>`;
+  });
+
+  document.getElementById('print-area').innerHTML = `
+    <div class="sheet">
+      <header>
+        <h1>Alphabet Class Sheet</h1>
+        <div class="sub">
+          <span>${esc(club)}</span>
+          <span>${esc(date)}</span>
+          <span>Coach: ${esc(coach)}</span>
+          <span class="hint-line">Coach calls letters — complete each exercise with good form.</span>
+        </div>
+      </header>
+      <div class="${bodyClass}">${cells}</div>
+      <footer>
+        <span>USA Gymnastics Development Program</span>
+        <span>${new Date().toLocaleDateString()}</span>
+      </footer>
+    </div>`;
+
+  document.getElementById('status').textContent = 'Sheet updated';
+}
+
+// Init
+initState();
+loadData();
+renderEditor();
+if (!LETTERS.some(L => state.picks[L])) randomize();
+else buildSheet();
+</script>
+
+</body>
+</html>
